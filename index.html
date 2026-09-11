@@ -1,18 +1,25 @@
+```html
 <!DOCTYPE html>
 
 <html lang="fr">
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<meta name="viewport"
+      content="width=device-width,initial-scale=1">
+
 <title>Pointage</title>
 
 <style>
+
 body{
   font-family:Arial,sans-serif;
   background:#f4f4f4;
   margin:0;
   padding:20px;
 }
+
 .box{
   max-width:500px;
   margin:auto;
@@ -20,7 +27,11 @@ body{
   padding:25px;
   border-radius:15px;
 }
-h2{text-align:center}
+
+h2{
+  text-align:center;
+}
+
 #gps{
   padding:18px;
   text-align:center;
@@ -29,13 +40,23 @@ h2{text-align:center}
   background:#e8f1ff;
   font-weight:bold;
 }
-.ok{background:#e8f5e9!important;color:#176b20}
-.erreur{background:#ffebee!important;color:#b00020}
+
+.ok{
+  background:#e8f5e9!important;
+  color:#176b20;
+}
+
+.erreur{
+  background:#ffebee!important;
+  color:#b00020;
+}
+
 label{
   display:block;
   font-weight:bold;
   margin-top:15px;
 }
+
 input,select{
   width:100%;
   box-sizing:border-box;
@@ -45,12 +66,17 @@ input,select{
   border-radius:8px;
   font-size:16px;
 }
-#formulaire{display:block}
+
+#formulaire{
+  display:block;
+}
+
 #message{
   text-align:center;
   font-weight:bold;
   margin-top:20px;
 }
+
 </style>
 
 </head>
@@ -67,22 +93,51 @@ input,select{
 
 <div id="formulaire">
 
-<label>NOM</label> <input id="nom" type="text" autocomplete="off">
+<label>NOM</label>
 
-<label>PRÉNOM</label> <input id="prenom" type="text" autocomplete="off">
+<input
+  id="nom"
+  type="text"
+  autocomplete="off"
+>
 
-<label>SITE D'INTERVENTION</label> <input id="site" type="text" autocomplete="off">
 
-<label>TYPE DE POINTAGE</label> <select id="type">
+<label>PRÉNOM</label>
 
-<option value="">-- Sélectionnez --</option>
+<input
+  id="prenom"
+  type="text"
+  autocomplete="off"
+>
+
+
+<label>SITE D'INTERVENTION</label>
+
+<input
+  id="site"
+  type="text"
+  autocomplete="off"
+>
+
+
+<label>TYPE DE POINTAGE</label>
+
+<select id="type">
+
+<option value="">
+-- Sélectionnez --
+</option>
+
 <option value="Heure de début de prestation">
 Heure de début de prestation
 </option>
+
 <option value="Heure de fin de prestation">
 Heure de fin de prestation
 </option>
+
 </select>
+
 
 <div id="message"></div>
 
@@ -90,12 +145,22 @@ Heure de fin de prestation
 
 </div>
 
+
 <script>
+
+
+/* SERVEUR GOOGLE SHEETS */
 
 const SERVEUR =
 "https://script.google.com/macros/s/AKfycbwq6-57RFAb7Pt9BOL4wIJapZ4mPqfsEXy-yIx1WhkykXrWPbNo0gxoIm4Kj9upf0dj/exec";
 
+
+/* VARIABLES */
+
 let positionGPS = null;
+
+let communeGPS = null;
+
 let enregistrementLance = false;
 
 
@@ -108,7 +173,10 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js")
       .catch(function(error) {
 
-        console.log("Service Worker :", error);
+        console.log(
+          "Service Worker :",
+          error
+        );
 
       });
 
@@ -117,7 +185,7 @@ if ("serviceWorker" in navigator) {
 }
 
 
-/* FORMULAIRE DISPONIBLE IMMÉDIATEMENT */
+/* DEMARRAGE */
 
 window.addEventListener("load", function() {
 
@@ -137,21 +205,25 @@ function lancerGPS(){
   const bloc =
     document.getElementById("gps");
 
+
   if (!navigator.geolocation){
 
-    bloc.className="erreur";
+    bloc.className = "erreur";
 
     bloc.innerHTML =
       "⚠️ GPS non disponible.<br>" +
-      "<small>Vous pouvez quand même effectuer le pointage.</small>";
+      "<small>" +
+      "Vous pouvez quand même effectuer le pointage." +
+      "</small>";
 
     return;
 
   }
 
+
   navigator.geolocation.getCurrentPosition(
 
-    function(position){
+    async function(position){
 
       positionGPS = {
 
@@ -166,40 +238,165 @@ function lancerGPS(){
 
       };
 
-      bloc.className="ok";
+
+      bloc.className = "ok";
 
       bloc.innerHTML =
         "✅ Position GPS enregistrée";
 
+
+      /*
+       * Recherche de la commune
+       */
+
+      await rechercherCommune();
+
+
     },
+
 
     function(error){
 
-      bloc.className="erreur";
+      bloc.className = "erreur";
 
-      if(error.code===1){
+
+      if(error.code === 1){
 
         bloc.innerHTML =
           "⚠️ Localisation non autorisée.<br>" +
-          "<small>Le pointage reste possible sans GPS.</small>";
+          "<small>" +
+          "Le pointage reste possible sans GPS." +
+          "</small>";
 
       }else{
 
         bloc.innerHTML =
           "⚠️ Position GPS indisponible.<br>" +
-          "<small>Le pointage reste possible sans GPS.</small>";
+          "<small>" +
+          "Le pointage reste possible sans GPS." +
+          "</small>";
 
       }
 
     },
 
+
     {
+
       enableHighAccuracy:true,
+
       timeout:30000,
+
       maximumAge:0
+
     }
 
   );
+
+}
+
+
+/* RECHERCHE DE LA COMMUNE */
+
+async function rechercherCommune(){
+
+  if(!positionGPS){
+
+    return;
+
+  }
+
+
+  if(!navigator.onLine){
+
+    communeGPS = null;
+
+    return;
+
+  }
+
+
+  try{
+
+    const latitude =
+      positionGPS.latitude;
+
+    const longitude =
+      positionGPS.longitude;
+
+
+    /*
+     * Service officiel de géocodage
+     * de la Géoplateforme / BAN
+     */
+
+    const url =
+      "https://data.geopf.fr/geocodage/reverse?" +
+      "lon=" +
+      encodeURIComponent(longitude) +
+      "&lat=" +
+      encodeURIComponent(latitude);
+
+
+    const response =
+      await fetch(url);
+
+
+    if(!response.ok){
+
+      throw new Error(
+        "Erreur géocodage"
+      );
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    if(
+      data &&
+      data.features &&
+      data.features.length
+    ){
+
+      const propriete =
+        data.features[0].properties;
+
+
+      communeGPS =
+        propriete.city ||
+        propriete.municipality ||
+        propriete.label ||
+        null;
+
+
+      if(communeGPS){
+
+        document.getElementById(
+          "gps"
+        ).innerHTML =
+          "✅ Position GPS enregistrée<br>" +
+          "<small>" +
+          "Commune : " +
+          communeGPS +
+          "</small>";
+
+      }
+
+    }
+
+  }catch(error){
+
+    console.log(
+      "Commune impossible à déterminer :",
+      error
+    );
+
+    communeGPS = null;
+
+  }
 
 }
 
@@ -208,16 +405,23 @@ function lancerGPS(){
 
 function activerFormulaire(){
 
-  ["nom","prenom","site","type"]
+  [
+    "nom",
+    "prenom",
+    "site",
+    "type"
+  ]
   .forEach(function(id){
 
     const element =
       document.getElementById(id);
 
+
     element.addEventListener(
       "input",
       verifier
     );
+
 
     element.addEventListener(
       "change",
@@ -233,43 +437,115 @@ function activerFormulaire(){
 
 function verifier(){
 
-  if(enregistrementLance) return;
-
-  const nom =
-    document.getElementById("nom")
-    .value.trim();
-
-  const prenom =
-    document.getElementById("prenom")
-    .value.trim();
-
-  const site =
-    document.getElementById("site")
-    .value.trim();
-
-  const type =
-    document.getElementById("type")
-    .value;
-
-  if(!nom || !prenom || !site || !type){
+  if(enregistrementLance){
 
     return;
 
   }
 
-  enregistrementLance=true;
 
-  const pointage={
+  const nom =
+    document
+      .getElementById("nom")
+      .value
+      .trim();
 
-    date:new Date().toISOString(),
 
-    nom:nom,
+  const prenom =
+    document
+      .getElementById("prenom")
+      .value
+      .trim();
 
-    prenom:prenom,
 
-    site:site,
+  const site =
+    document
+      .getElementById("site")
+      .value
+      .trim();
 
-    type:type,
+
+  const type =
+    document
+      .getElementById("type")
+      .value;
+
+
+  /*
+   * Tous les champs doivent être remplis.
+   */
+
+  if(
+    !nom ||
+    !prenom ||
+    !site ||
+    !type
+  ){
+
+    return;
+
+  }
+
+
+  enregistrementLance = true;
+
+
+  /*
+   * IMPORTANT :
+   *
+   * L'heure est créée ICI,
+   * au moment où le formulaire
+   * est terminé.
+   *
+   * Elle ne sera PAS recalculée
+   * lorsque Internet reviendra.
+   */
+
+  const maintenant =
+    new Date();
+
+
+  const datePointage =
+    maintenant.toLocaleDateString(
+      "fr-FR"
+    );
+
+
+  const heurePointage =
+    maintenant.toLocaleTimeString(
+      "fr-FR"
+    );
+
+
+  /*
+   * CREATION DU POINTAGE
+   */
+
+  const pointage = {
+
+    date:
+      datePointage,
+
+    heure:
+      heurePointage,
+
+    dateHeure:
+      maintenant.toISOString(),
+
+    nom:
+      nom,
+
+    prenom:
+      prenom,
+
+    site:
+      site,
+
+    type:
+      type,
+
+    commune:
+      communeGPS || "Commune non déterminée",
 
     latitude:
       positionGPS
@@ -289,9 +565,12 @@ function verifier(){
   };
 
 
-  /* STOCKAGE LOCAL */
+  /*
+   * STOCKAGE LOCAL
+   */
 
   stocker(pointage);
+
 
   document.getElementById(
     "message"
@@ -299,7 +578,9 @@ function verifier(){
     "⏳ Pointage enregistré localement...";
 
 
-  /* ENVOI */
+  /*
+   * TENTATIVE D'ENVOI
+   */
 
   synchroniser();
 
@@ -310,52 +591,68 @@ function verifier(){
 
 function ouvrirDB(){
 
-  return new Promise(function(resolve,reject){
+  return new Promise(
+    function(resolve,reject){
 
-    const request =
-      indexedDB.open(
-        "POINTAGE_DB",
-        1
-      );
+      const request =
+        indexedDB.open(
+          "POINTAGE_DB",
+          1
+        );
 
-    request.onupgradeneeded =
-      function(event){
 
-        const db =
-          event.target.result;
+      request.onupgradeneeded =
+        function(event){
 
-        if(!db.objectStoreNames.contains("pointages")){
+          const db =
+            event.target.result;
 
-          db.createObjectStore(
-            "pointages",
-            {
-              keyPath:"id",
-              autoIncrement:true
-            }
+
+          if(
+            !db.objectStoreNames.contains(
+              "pointages"
+            )
+          ){
+
+            db.createObjectStore(
+              "pointages",
+              {
+                keyPath:"id",
+                autoIncrement:true
+              }
+            );
+
+          }
+
+        };
+
+
+      request.onsuccess =
+        function(){
+
+          resolve(
+            request.result
           );
 
-        }
+        };
 
-      };
 
-    request.onsuccess =
-      function(){
+      request.onerror =
+        function(){
 
-        resolve(request.result);
+          reject(
+            request.error
+          );
 
-      };
+        };
 
-    request.onerror =
-      function(){
-
-        reject(request.error);
-
-      };
-
-  });
+    }
+  );
 
 }
 
+
+/* STOCKER */
 
 async function stocker(pointage){
 
@@ -364,19 +661,25 @@ async function stocker(pointage){
     const db =
       await ouvrirDB();
 
+
     const transaction =
       db.transaction(
         "pointages",
         "readwrite"
       );
 
-    transaction.objectStore(
-      "pointages"
-    ).add(pointage);
+
+    transaction
+      .objectStore("pointages")
+      .add(pointage);
+
 
   }catch(error){
 
-    console.log(error);
+    console.log(
+      "Stockage impossible :",
+      error
+    );
 
   }
 
@@ -390,34 +693,44 @@ async function recupererPointages(){
   const db =
     await ouvrirDB();
 
-  return new Promise(function(resolve,reject){
 
-    const transaction =
-      db.transaction(
-        "pointages",
-        "readonly"
-      );
+  return new Promise(
+    function(resolve,reject){
 
-    const request =
-      transaction
-      .objectStore("pointages")
-      .getAll();
+      const transaction =
+        db.transaction(
+          "pointages",
+          "readonly"
+        );
 
-    request.onsuccess =
-      function(){
 
-        resolve(request.result);
+      const request =
+        transaction
+          .objectStore("pointages")
+          .getAll();
 
-      };
 
-    request.onerror =
-      function(){
+      request.onsuccess =
+        function(){
 
-        reject(request.error);
+          resolve(
+            request.result
+          );
 
-      };
+        };
 
-  });
+
+      request.onerror =
+        function(){
+
+          reject(
+            request.error
+          );
+
+        };
+
+    }
+  );
 
 }
 
@@ -429,11 +742,13 @@ async function supprimer(id){
   const db =
     await ouvrirDB();
 
+
   const transaction =
     db.transaction(
       "pointages",
       "readwrite"
     );
+
 
   transaction
     .objectStore("pointages")
@@ -449,22 +764,46 @@ async function synchroniser(){
   if(!navigator.onLine){
 
     const message =
-      document.getElementById("message");
+      document.getElementById(
+        "message"
+      );
+
 
     if(message){
 
       message.innerHTML =
         "✅ Pointage enregistré.<br>" +
-        "<small>Il sera envoyé dès que la connexion revient.</small>";
+        "<small>" +
+        "Il sera envoyé dès que la connexion revient." +
+        "</small>";
 
     }
+
 
     return;
 
   }
 
 
-  let liste=[];
+  /*
+   * On tente de récupérer
+   * la commune si elle n'était
+   * pas disponible au moment
+   * du pointage.
+   */
+
+  if(
+    positionGPS &&
+    !communeGPS
+  ){
+
+    await rechercherCommune();
+
+  }
+
+
+  let liste = [];
+
 
   try{
 
@@ -483,12 +822,97 @@ async function synchroniser(){
   }
 
 
-  if(!liste.length) return;
+  if(!liste.length){
+
+    return;
+
+  }
 
 
   for(const pointage of liste){
 
     try{
+
+      /*
+       * Si la commune n'était
+       * pas connue au départ,
+       * on essaie de la compléter
+       * avec les coordonnées GPS.
+       */
+
+      if(
+        (
+          !pointage.commune ||
+          pointage.commune ===
+          "Commune non déterminée"
+        ) &&
+        pointage.latitude !== null &&
+        pointage.longitude !== null
+      ){
+
+        try{
+
+          const url =
+            "https://data.geopf.fr/geocodage/reverse?" +
+            "lon=" +
+            encodeURIComponent(
+              pointage.longitude
+            ) +
+            "&lat=" +
+            encodeURIComponent(
+              pointage.latitude
+            );
+
+
+          const response =
+            await fetch(url);
+
+
+          if(response.ok){
+
+            const data =
+              await response.json();
+
+
+            if(
+              data &&
+              data.features &&
+              data.features.length
+            ){
+
+              const propriete =
+                data.features[0].properties;
+
+
+              pointage.commune =
+                propriete.city ||
+                propriete.municipality ||
+                propriete.label ||
+                pointage.commune;
+
+            }
+
+          }
+
+        }catch(error){
+
+          console.log(
+            "Commune non récupérée",
+            error
+          );
+
+        }
+
+      }
+
+
+      /*
+       * ENVOI À GOOGLE SHEETS
+       *
+       * L'objet contient toujours
+       * l'heure enregistrée au
+       * moment du pointage.
+       */
 
       await fetch(
 
@@ -501,8 +925,10 @@ async function synchroniser(){
           mode:"no-cors",
 
           headers:{
+
             "Content-Type":
               "text/plain;charset=utf-8"
+
           },
 
           body:
@@ -512,9 +938,16 @@ async function synchroniser(){
 
       );
 
+
+      /*
+       * Suppression locale
+       * uniquement après l'envoi.
+       */
+
       await supprimer(
         pointage.id
       );
+
 
     }catch(error){
 
@@ -561,3 +994,4 @@ setInterval(
 
 </body>
 </html>
+```
