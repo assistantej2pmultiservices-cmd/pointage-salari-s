@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pointage salarié</title>
+</head>
+
+<body>
+
+<h2>📍 POINTAGE</h2>
+
+<div id="gps">
+  📍 Recherche de votre position...
+</div>
+
+<div id="formulaire" style="display:none;">
+
+  <label>NOM</label><br>
+  <input id="nom" type="text"><br><br>
+
+  <label>PRÉNOM</label><br>
+  <input id="prenom" type="text"><br><br>
+
+  <label>SITE D'INTERVENTION</label><br>
+  <input id="site" type="text"><br><br>
+
+  <label>TYPE DE POINTAGE</label><br>
+  <select id="type">
+    <option value="">-- Sélectionnez --</option>
+    <option value="Heure de début de prestation">
+      Heure de début de prestation
+    </option>
+    <option value="Heure de fin de prestation">
+      Heure de fin de prestation
+    </option>
+  </select>
+
+  <p id="message"></p>
+
+</div>
+
+<script>
+
+let gps = null;
+let enregistre = false;
+
+window.onload = function() {
+
+  navigator.geolocation.getCurrentPosition(
+
+    function(position) {
+
+      gps = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        precision: position.coords.accuracy
+      };
+
+      document.getElementById("gps").innerHTML =
+        "✅ Position GPS enregistrée";
+
+      document.getElementById("formulaire").style.display =
+        "block";
+
+      document.querySelectorAll(
+        "#nom,#prenom,#site,#type"
+      ).forEach(function(champ) {
+
+        champ.addEventListener("input", verifier);
+        champ.addEventListener("change", verifier);
+
+      });
+
+    },
+
+    function() {
+
+      document.getElementById("gps").innerHTML =
+        "❌ Impossible d'obtenir la localisation.";
+
+    },
+
+    {
+      enableHighAccuracy: true,
+      timeout: 30000,
+      maximumAge: 0
+    }
+
+  );
+
+};
+
+
+function verifier() {
+
+  if (enregistre || !gps) return;
+
+  const nom =
+    document.getElementById("nom").value.trim();
+
+  const prenom =
+    document.getElementById("prenom").value.trim();
+
+  const site =
+    document.getElementById("site").value.trim();
+
+  const type =
+    document.getElementById("type").value;
+
+  if (!nom || !prenom || !site || !type) return;
+
+  enregistre = true;
+
+  const pointage = {
+
+    date: new Date().toISOString(),
+
+    nom: nom,
+
+    prenom: prenom,
+
+    site: site,
+
+    type: type,
+
+    latitude: gps.latitude,
+
+    longitude: gps.longitude,
+
+    precision: gps.precision
+
+  };
+
+  localStorage.setItem(
+    "pointage_en_attente",
+    JSON.stringify(pointage)
+  );
+
+  document.getElementById("message").innerHTML =
+    "⏳ Enregistrement automatique...";
+
+  envoyer(pointage);
+
+}
+
+
+function envoyer(pointage) {
+
+  /*
+   * L'adresse de ton Apps Script
+   * sera ajoutée à l'étape suivante.
+   */
+
+  if (!navigator.onLine) {
+
+    document.getElementById("message").innerHTML =
+      "✅ Pointage enregistré sur le téléphone.<br>" +
+      "Il sera envoyé dès le retour d'Internet.";
+
+    return;
+  }
+
+  // Connexion au serveur ajoutée à l'étape suivante.
+
+}
+
+</script>
+
+</body>
+</html>
