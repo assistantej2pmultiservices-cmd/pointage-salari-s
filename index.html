@@ -100,9 +100,7 @@ let positionGPS = null;
 let enregistrementLance = false;
 
 
-/************************************************
- * SERVICE WORKER
- ************************************************/
+/* SERVICE WORKER */
 
 if ("serviceWorker" in navigator) {
 
@@ -111,10 +109,7 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js")
       .catch(function(error) {
 
-        console.log(
-          "Service Worker : ",
-          error
-        );
+        console.log("Service Worker :", error);
 
       });
 
@@ -123,9 +118,7 @@ if ("serviceWorker" in navigator) {
 }
 
 
-/************************************************
- * GPS EN PREMIER
- ************************************************/
+/* GPS EN PREMIER */
 
 window.addEventListener("load", function() {
 
@@ -211,9 +204,7 @@ function lancerGPS(){
 }
 
 
-/************************************************
- * FORMULAIRE
- ************************************************/
+/* FORMULAIRE */
 
 function activerFormulaire(){
 
@@ -238,9 +229,7 @@ function activerFormulaire(){
 }
 
 
-/************************************************
- * VERIFICATION
- ************************************************/
+/* VERIFICATION */
 
 function verifier(){
 
@@ -264,12 +253,7 @@ function verifier(){
     document.getElementById("type")
     .value;
 
-  if(
-    !nom ||
-    !prenom ||
-    !site ||
-    !type
-  ){
+  if(!nom || !prenom || !site || !type){
 
     return;
 
@@ -300,9 +284,8 @@ function verifier(){
 
   };
 
-  /********************************************
-   * STOCKAGE LOCAL IMMÉDIAT
-   ********************************************/
+
+  /* STOCKAGE LOCAL */
 
   stocker(pointage);
 
@@ -311,18 +294,15 @@ function verifier(){
   ).innerHTML =
     "⏳ Pointage enregistré localement...";
 
-  /********************************************
-   * TENTATIVE D'ENVOI
-   ********************************************/
+
+  /* ENVOI */
 
   synchroniser();
 
 }
 
 
-/************************************************
- * STOCKAGE INDEXEDDB
- ************************************************/
+/* INDEXEDDB */
 
 function ouvrirDB(){
 
@@ -399,9 +379,7 @@ async function stocker(pointage){
 }
 
 
-/************************************************
- * RÉCUPÉRER LES POINTAGES
- ************************************************/
+/* RÉCUPÉRER */
 
 async function recupererPointages(){
 
@@ -440,9 +418,7 @@ async function recupererPointages(){
 }
 
 
-/************************************************
- * SUPPRIMER UN POINTAGE ENVOYÉ
- ************************************************/
+/* SUPPRIMER APRÈS ENVOI */
 
 async function supprimer(id){
 
@@ -462,23 +438,27 @@ async function supprimer(id){
 }
 
 
-/************************************************
- * SYNCHRONISATION
- ************************************************/
+/* SYNCHRONISATION */
 
 async function synchroniser(){
 
   if(!navigator.onLine){
 
-    document.getElementById(
-      "message"
-    ).innerHTML =
-      "✅ Pointage enregistré.<br>" +
-      "<small>Il sera envoyé dès que la connexion revient.</small>";
+    const message =
+      document.getElementById("message");
+
+    if(message){
+
+      message.innerHTML =
+        "✅ Pointage enregistré.<br>" +
+        "<small>Il sera envoyé dès que la connexion revient.</small>";
+
+    }
 
     return;
 
   }
+
 
   let liste=[];
 
@@ -492,6 +472,7 @@ async function synchroniser(){
     return;
 
   }
+
 
   if(!liste.length) return;
 
@@ -540,21 +521,15 @@ async function synchroniser(){
   }
 
 
-  if(liste.length){
-
-    document.getElementById(
-      "message"
-    ).innerHTML =
-      "✅ POINTAGE ENREGISTRÉ AUTOMATIQUEMENT";
-
-  }
+  document.getElementById(
+    "message"
+  ).innerHTML =
+    "✅ POINTAGE ENREGISTRÉ AUTOMATIQUEMENT";
 
 }
 
 
-/************************************************
- * INTERNET REVIENT
- ************************************************/
+/* INTERNET REVIENT */
 
 window.addEventListener(
   "online",
@@ -566,9 +541,7 @@ window.addEventListener(
 );
 
 
-/************************************************
- * SYNCHRONISATION RÉGULIÈRE
- ************************************************/
+/* SYNCHRONISATION RÉGULIÈRE */
 
 setInterval(
   synchroniser,
