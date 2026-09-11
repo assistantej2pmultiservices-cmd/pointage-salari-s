@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -10,7 +11,6 @@
 body {
   font-family: Arial, sans-serif;
   background: #f4f4f4;
-  margin: 0;
   padding: 20px;
 }
 
@@ -20,7 +20,7 @@ body {
   background: white;
   padding: 25px;
   border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px #ccc;
 }
 
 h1 {
@@ -33,45 +33,29 @@ label {
   font-weight: bold;
 }
 
-input,
-select {
+input, select, button {
   width: 100%;
   box-sizing: border-box;
-  padding: 12px;
+  padding: 13px;
   margin-top: 6px;
   font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
 }
 
 button {
-  width: 100%;
   margin-top: 25px;
-  padding: 14px;
-  font-size: 17px;
-  border: none;
-  border-radius: 6px;
   background: #1a73e8;
   color: white;
-  cursor: pointer;
+  border: 0;
+  border-radius: 6px;
 }
 
 button:disabled {
   background: #999;
 }
 
-#message {
-  margin-top: 20px;
-  text-align: center;
-  font-weight: bold;
-}
-
-#gps {
+#gps, #message {
   margin-top: 15px;
-  padding: 10px;
-  background: #f1f1f1;
-  border-radius: 6px;
-  font-size: 14px;
+  text-align: center;
 }
 </style>
 </head>
@@ -85,25 +69,13 @@ button:disabled {
 <form id="formPointage">
 
 <label>Nom</label>
-<input
-  type="text"
-  id="nom"
-  required
->
+<input id="nom" required>
 
 <label>Prénom</label>
-<input
-  type="text"
-  id="prenom"
-  required
->
+<input id="prenom" required>
 
 <label>Site</label>
-<input
-  type="text"
-  id="site"
-  required
->
+<input id="site" required>
 
 <label>Type de pointage</label>
 <select id="type" required>
@@ -114,15 +86,10 @@ button:disabled {
   <option value="Pause fin">Pause fin</option>
 </select>
 
-<div id="gps">
-GPS : recherche de la position...
-</div>
+<div id="gps">Recherche GPS...</div>
 
-<button
-  type="submit"
-  id="bouton"
->
-  ENREGISTRER LE POINTAGE
+<button id="bouton" type="submit">
+ENREGISTRER LE POINTAGE
 </button>
 
 <div id="message"></div>
@@ -136,7 +103,7 @@ GPS : recherche de la position...
 const SERVEUR =
 "https://script.google.com/macros/s/AKfycbwq6-57RFAb7Pt9BOL4wIJapZ4mPqfsEXy-yIx1WhkykXrWPbNo0gxoIm4Kj9upf0dj/exec";
 
-var positionGPS = {
+let positionGPS = {
   latitude: "",
   longitude: "",
   precision: ""
@@ -144,14 +111,9 @@ var positionGPS = {
 
 function obtenirGPS() {
 
-  var zoneGPS =
-    document.getElementById("gps");
-
   if (!navigator.geolocation) {
-
-    zoneGPS.textContent =
+    document.getElementById("gps").textContent =
       "GPS non disponible";
-
     return;
   }
 
@@ -168,16 +130,14 @@ function obtenirGPS() {
       positionGPS.precision =
         position.coords.accuracy;
 
-      zoneGPS.textContent =
-        "GPS OK - précision : " +
-        Math.round(position.coords.accuracy) +
-        " m";
+      document.getElementById("gps").textContent =
+        "GPS OK";
     },
 
-    function(error) {
+    function() {
 
-      zoneGPS.textContent =
-        "GPS non disponible - pointage possible sans GPS";
+      document.getElementById("gps").textContent =
+        "GPS non disponible";
     },
 
     {
@@ -188,30 +148,23 @@ function obtenirGPS() {
   );
 }
 
-document
-.getElementById("formPointage")
+document.getElementById("formPointage")
 .addEventListener("submit", async function(e) {
 
   e.preventDefault();
 
-  var bouton =
+  const bouton =
     document.getElementById("bouton");
 
-  var message =
+  const message =
     document.getElementById("message");
 
   bouton.disabled = true;
+  message.textContent = "Enregistrement...";
 
-  message.textContent =
-    "Enregistrement en cours...";
+  const pointage = {
 
-  var maintenant =
-    new Date();
-
-  var pointage = {
-
-    dateHeure:
-      maintenant.toISOString(),
+    dateHeure: new Date().toISOString(),
 
     nom:
       document.getElementById("nom").value.trim(),
@@ -238,41 +191,27 @@ document
   try {
 
     await fetch(SERVEUR, {
-
       method: "POST",
-
       mode: "no-cors",
-
       headers: {
-        "Content-Type":
-          "text/plain;charset=utf-8"
+        "Content-Type": "text/plain;charset=utf-8"
       },
-
-      body:
-        JSON.stringify(pointage)
+      body: JSON.stringify(pointage)
     });
 
     message.textContent =
-      "Pointage enregistré.";
+      "Pointage enregistré ✔";
 
     message.style.color = "green";
 
-    document
-      .getElementById("formPointage")
-      .reset();
-
-    positionGPS = {
-      latitude: "",
-      longitude: "",
-      precision: ""
-    };
+    document.getElementById("formPointage").reset();
 
     obtenirGPS();
 
   } catch (error) {
 
     message.textContent =
-      "Erreur lors de l'enregistrement.";
+      "Erreur d'enregistrement";
 
     message.style.color = "red";
 
@@ -280,7 +219,6 @@ document
 
     bouton.disabled = false;
   }
-
 });
 
 obtenirGPS();
@@ -289,3 +227,4 @@ obtenirGPS();
 
 </body>
 </html>
+```
