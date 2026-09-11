@@ -57,8 +57,7 @@ label{
   margin-top:15px;
 }
 
-input,
-select{
+input,select{
   width:100%;
   box-sizing:border-box;
   padding:14px;
@@ -78,7 +77,6 @@ select{
 
 </head>
 
-
 <body>
 
 <div class="box">
@@ -89,33 +87,17 @@ select{
 📍 Recherche de votre position...
 </div>
 
-
 <label>NOM</label>
 
-<input
-  id="nom"
-  type="text"
-  autocomplete="off"
->
-
+<input id="nom" type="text">
 
 <label>PRÉNOM</label>
 
-<input
-  id="prenom"
-  type="text"
-  autocomplete="off"
->
-
+<input id="prenom" type="text">
 
 <label>SITE D'INTERVENTION</label>
 
-<input
-  id="site"
-  type="text"
-  autocomplete="off"
->
-
+<input id="site" type="text">
 
 <label>TYPE DE POINTAGE</label>
 
@@ -135,47 +117,32 @@ Heure de fin de prestation
 
 </select>
 
-
 <div id="message"></div>
 
 </div>
 
-
 <script>
-
 
 const SERVEUR =
 "https://script.google.com/macros/s/AKfycbwq6-57RFAb7Pt9BOL4wIJapZ4mPqfsEXy-yIx1WhkykXrWPbNo0gxoIm4Kj9upf0dj/exec";
 
 
 let positionGPS = null;
-
 let communeGPS = null;
+let envoiEnCours = false;
 
-let pointageEnvoye = false;
 
-
-/*
- * GPS
- */
+/* GPS */
 
 function lancerGPS(){
 
-  const bloc =
-    document.getElementById("gps");
-
-
   if(!navigator.geolocation){
 
-    bloc.className = "erreur";
-
-    bloc.innerHTML =
-      "⚠️ GPS non disponible.";
+    document.getElementById("gps").innerHTML =
+      "⚠️ GPS non disponible";
 
     return;
-
   }
-
 
   navigator.geolocation.getCurrentPosition(
 
@@ -183,49 +150,38 @@ function lancerGPS(){
 
       positionGPS = {
 
-        latitude:
-          position.coords.latitude,
+        latitude: position.coords.latitude,
 
-        longitude:
-          position.coords.longitude,
+        longitude: position.coords.longitude,
 
-        precision:
-          position.coords.accuracy
+        precision: position.coords.accuracy
 
       };
 
+      document.getElementById("gps").className = "ok";
 
-      bloc.className = "ok";
-
-      bloc.innerHTML =
+      document.getElementById("gps").innerHTML =
         "✅ Position GPS enregistrée";
-
 
       await rechercherCommune();
 
     },
 
-
     function(){
 
-      bloc.className = "erreur";
+      document.getElementById("gps").className =
+        "erreur";
 
-      bloc.innerHTML =
-        "⚠️ GPS indisponible.<br>" +
-        "<small>" +
-        "Le pointage reste possible." +
-        "</small>";
+      document.getElementById("gps").innerHTML =
+        "⚠️ GPS indisponible<br>" +
+        "<small>Le pointage reste possible.</small>";
 
     },
 
     {
-
       enableHighAccuracy:true,
-
       timeout:30000,
-
       maximumAge:0
-
     }
 
   );
@@ -233,80 +189,52 @@ function lancerGPS(){
 }
 
 
-/*
- * Commune
- */
+/* COMMUNE */
 
 async function rechercherCommune(){
 
-  if(!positionGPS){
-
+  if(!positionGPS || !navigator.onLine){
     return;
-
   }
-
-
-  if(!navigator.onLine){
-
-    return;
-
-  }
-
 
   try{
 
-    const url =
+    var url =
       "https://data.geopf.fr/geocodage/reverse?" +
       "lon=" +
-      encodeURIComponent(
-        positionGPS.longitude
-      ) +
+      encodeURIComponent(positionGPS.longitude) +
       "&lat=" +
-      encodeURIComponent(
-        positionGPS.latitude
-      );
+      encodeURIComponent(positionGPS.latitude);
 
-
-    const response =
+    var response =
       await fetch(url);
 
-
     if(!response.ok){
-
       return;
-
     }
 
-
-    const data =
+    var data =
       await response.json();
 
-
     if(
-      data &&
       data.features &&
       data.features.length
     ){
 
-      const proprietes =
+      var p =
         data.features[0].properties;
 
-
       communeGPS =
-        proprietes.city ||
-        proprietes.municipality ||
-        proprietes.label ||
+        p.city ||
+        p.municipality ||
+        p.label ||
         null;
-
 
       if(communeGPS){
 
-        document.getElementById(
-          "gps"
-        ).innerHTML =
+        document.getElementById("gps").innerHTML =
           "✅ Position GPS enregistrée<br>" +
-          "<small>" +
-          "Commune : " +
+          "<small>Commune : " +
           communeGPS +
           "</small>";
 
@@ -314,108 +242,83 @@ async function rechercherCommune(){
 
     }
 
-  }catch(erreur){
+  }catch(error){
 
-    console.log(
-      "Erreur commune",
-      erreur
-    );
+    console.log(error);
 
   }
 
 }
 
 
-/*
- * Envoi automatique
- */
+/* VERIFICATION DU FORMULAIRE */
 
-async function envoyerPointage(){
+function verifier(){
 
-  if(pointageEnvoye){
-
+  if(envoiEnCours){
     return;
-
   }
 
+  var nom =
+    document.getElementById("nom").value.trim();
 
-  const nom =
-    document
-      .getElementById("nom")
-      .value
-      .trim();
+  var prenom =
+    document.getElementById("prenom").value.trim();
 
+  var site =
+    document.getElementById("site").value.trim();
 
-  const prenom =
-    document
-      .getElementById("prenom")
-      .value
-      .trim();
-
-
-  const site =
-    document
-      .getElementById("site")
-      .value
-      .trim();
-
-
-  const type =
-    document
-      .getElementById("type")
-      .value;
-
+  var type =
+    document.getElementById("type").value;
 
   if(
-    !nom ||
-    !prenom ||
-    !site ||
-    !type
+    nom &&
+    prenom &&
+    site &&
+    type
   ){
 
-    return;
+    envoyer();
 
   }
 
-
-  pointageEnvoye = true;
-
-
-  /*
-   * Date et heure EXACTES
-   * du remplissage du formulaire.
-   */
-
-  const maintenant =
-    new Date();
+}
 
 
-  const pointage = {
+/* ENVOI */
 
-    date:
-      maintenant.toLocaleDateString(
-        "fr-FR"
-      ),
+async function envoyer(){
 
-    heure:
-      maintenant.toLocaleTimeString(
-        "fr-FR"
-      ),
+  if(envoiEnCours){
+    return;
+  }
+
+  envoiEnCours = true;
+
+  var maintenant = new Date();
+
+  var pointage = {
 
     dateHeure:
       maintenant.toISOString(),
 
+    date:
+      maintenant.toLocaleDateString("fr-FR"),
+
+    heure:
+      maintenant.toLocaleTimeString("fr-FR"),
+
     nom:
-      nom,
+      document.getElementById("nom").value.trim(),
 
     prenom:
-      prenom,
+      document.getElementById("prenom").value.trim(),
 
     site:
-      site,
+      document.getElementById("site").value.trim(),
 
     type:
-      type,
+      document.getElementById("type").value,
 
     latitude:
       positionGPS
@@ -439,13 +342,7 @@ async function envoyerPointage(){
   };
 
 
-  const message =
-    document.getElementById(
-      "message"
-    );
-
-
-  message.innerHTML =
+  document.getElementById("message").innerHTML =
     "⏳ Envoi du pointage...";
 
 
@@ -456,174 +353,79 @@ async function envoyerPointage(){
       SERVEUR,
 
       {
-
         method:"POST",
 
         mode:"no-cors",
 
         headers:{
-
           "Content-Type":
             "text/plain;charset=utf-8"
-
         },
 
         body:
           JSON.stringify(pointage)
-
       }
 
     );
 
 
-    message.innerHTML =
+    document.getElementById("message").innerHTML =
       "✅ POINTAGE ENREGISTRÉ";
 
 
-    /*
-     * Nettoyage du formulaire
-     */
+    document.getElementById("nom").value = "";
+    document.getElementById("prenom").value = "";
+    document.getElementById("site").value = "";
+    document.getElementById("type").value = "";
 
-    document.getElementById(
-      "nom"
-    ).value = "";
+  }
 
+  catch(error){
 
-    document.getElementById(
-      "prenom"
-    ).value = "";
+    console.log(error);
 
+    document.getElementById("message").innerHTML =
+      "⚠️ Erreur d'envoi";
 
-    document.getElementById(
-      "site"
-    ).value = "";
+  }
 
+  finally{
 
-    document.getElementById(
-      "type"
-    ).value = "";
-
-
-    /*
-     * Permettre un nouveau pointage
-     */
-
-    pointageEnvoye = false;
-
-
-  }catch(erreur){
-
-    console.log(
-      "Erreur envoi",
-      erreur
-    );
-
-
-    message.innerHTML =
-      "⚠️ Erreur lors de l'envoi.";
-
-
-    pointageEnvoye = false;
+    envoiEnCours = false;
 
   }
 
 }
 
 
-/*
- * Détection automatique lorsque
- * les 4 champs sont remplis.
- */
+/* CHAMPS */
 
-function verifierFormulaire(){
+document
+  .getElementById("nom")
+  .addEventListener("input", verifier);
 
-  const nom =
-    document
-      .getElementById("nom")
-      .value
-      .trim();
+document
+  .getElementById("prenom")
+  .addEventListener("input", verifier);
 
+document
+  .getElementById("site")
+  .addEventListener("input", verifier);
 
-  const prenom =
-    document
-      .getElementById("prenom")
-      .value
-      .trim();
+document
+  .getElementById("type")
+  .addEventListener("change", verifier);
 
 
-  const site =
-    document
-      .getElementById("site")
-      .value
-      .trim();
-
-
-  const type =
-    document
-      .getElementById("type")
-      .value;
-
-
-  if(
-    nom &&
-    prenom &&
-    site &&
-    type
-  ){
-
-    envoyerPointage();
-
-  }
-
-}
-
-
-/*
- * Surveillance des champs
- */
-
-[
-  "nom",
-  "prenom",
-  "site",
-  "type"
-]
-.forEach(function(id){
-
-  const element =
-    document.getElementById(id);
-
-
-  element.addEventListener(
-    "input",
-    verifierFormulaire
-  );
-
-
-  element.addEventListener(
-    "change",
-    verifierFormulaire
-  );
-
-});
-
-
-/*
- * Démarrage
- */
+/* DEMARRAGE */
 
 window.addEventListener(
   "load",
-  function(){
-
-    lancerGPS();
-
-  }
+  lancerGPS
 );
 
 </script>
 
 </body>
-
 </html>
 ```
