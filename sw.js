@@ -5,11 +5,17 @@ const FILES = [
   "./index.html"
 ];
 
-self.addEventListener("install", event => {
+self.addEventListener("install", function(event) {
 
   event.waitUntil(
+
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(FILES))
+      .then(function(cache) {
+
+        return cache.addAll(FILES);
+
+      })
+
   );
 
   self.skipWaiting();
@@ -17,17 +23,23 @@ self.addEventListener("install", event => {
 });
 
 
-self.addEventListener("activate", event => {
+self.addEventListener("activate", function(event) {
 
   event.waitUntil(
 
-    caches.keys().then(keys => {
+    caches.keys().then(function(keys) {
 
       return Promise.all(
 
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
+        keys.map(function(key) {
+
+          if (key !== CACHE_NAME) {
+
+            return caches.delete(key);
+
+          }
+
+        })
 
       );
 
@@ -40,7 +52,7 @@ self.addEventListener("activate", event => {
 });
 
 
-self.addEventListener("fetch", event => {
+self.addEventListener("fetch", function(event) {
 
   if (event.request.method !== "GET") {
     return;
@@ -49,14 +61,16 @@ self.addEventListener("fetch", event => {
   event.respondWith(
 
     caches.match(event.request)
-      .then(cachedResponse => {
+      .then(function(cachedResponse) {
 
         if (cachedResponse) {
+
           return cachedResponse;
+
         }
 
         return fetch(event.request)
-          .then(response => {
+          .then(function(response) {
 
             if (
               response &&
@@ -67,7 +81,7 @@ self.addEventListener("fetch", event => {
                 response.clone();
 
               caches.open(CACHE_NAME)
-                .then(cache => {
+                .then(function(cache) {
 
                   cache.put(
                     event.request,
@@ -81,11 +95,9 @@ self.addEventListener("fetch", event => {
             return response;
 
           })
-          .catch(() => {
+          .catch(function() {
 
-            return caches.match(
-              "./index.html"
-            );
+            return caches.match("./index.html");
 
           });
 
