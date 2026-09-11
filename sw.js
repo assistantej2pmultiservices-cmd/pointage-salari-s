@@ -1,4 +1,4 @@
-const CACHE_NAME = "pointage-v1";
+const CACHE_NAME = "pointage-v2";
 
 const FILES = [
   "./",
@@ -35,26 +35,32 @@ self.addEventListener("fetch", event => {
   }
 
   event.respondWith(
+    caches.match(event.request)
+      .then(cachedResponse => {
 
-    fetch(event.request)
-      .then(response => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
 
-        const copie = response.clone();
+        return fetch(event.request)
+          .then(response => {
 
-        caches.open(CACHE_NAME)
-          .then(cache => {
-            cache.put(event.request, copie);
+            if (response && response.status === 200) {
+              const copie = response.clone();
+
+              caches.open(CACHE_NAME)
+                .then(cache => {
+                  cache.put(event.request, copie);
+                });
+            }
+
+            return response;
+          })
+          .catch(() => {
+            return caches.match("./index.html");
           });
 
-        return response;
-
       })
-      .catch(() => {
-
-        return caches.match(event.request);
-
-      })
-
   );
 
 });
