@@ -6,45 +6,31 @@ const FILES = [
 ];
 
 self.addEventListener("install", event => {
-
   event.waitUntil(
-
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(FILES))
-
   );
 
   self.skipWaiting();
-
 });
 
-
 self.addEventListener("activate", event => {
-
   event.waitUntil(
-
     caches.keys().then(keys =>
-
       Promise.all(
-
         keys
           .filter(key => key !== CACHE_NAME)
           .map(key => caches.delete(key))
-
       )
-
     )
-
   );
 
   self.clients.claim();
-
 });
-
 
 self.addEventListener("fetch", event => {
 
-  if(event.request.method !== "GET"){
+  if (event.request.method !== "GET") {
     return;
   }
 
@@ -53,17 +39,11 @@ self.addEventListener("fetch", event => {
     fetch(event.request)
       .then(response => {
 
-        const copie =
-          response.clone();
+        const copie = response.clone();
 
         caches.open(CACHE_NAME)
           .then(cache => {
-
-            cache.put(
-              event.request,
-              copie
-            );
-
+            cache.put(event.request, copie);
           });
 
         return response;
@@ -71,9 +51,7 @@ self.addEventListener("fetch", event => {
       })
       .catch(() => {
 
-        return caches.match(
-          event.request
-        );
+        return caches.match(event.request);
 
       })
 
