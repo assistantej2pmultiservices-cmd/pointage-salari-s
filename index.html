@@ -140,7 +140,6 @@ Heure de fin de prestation
 
 </div>
 
-
 <script>
 
 /* SERVEUR GOOGLE SHEETS */
@@ -156,8 +155,6 @@ let positionGPS = null;
 let communeGPS = null;
 
 let enregistrementLance = false;
-
-let synchronisationEnCours = false;
 
 
 /* SERVICE WORKER */
@@ -386,31 +383,6 @@ async function rechercherCommune(){
 }
 
 
-/* CREATION D'UN IDENTIFIANT UNIQUE */
-
-function creerPointageId(){
-
-  if(
-    window.crypto &&
-    typeof window.crypto.randomUUID === "function"
-  ){
-
-    return window.crypto.randomUUID();
-
-  }
-
-
-  return (
-    Date.now().toString(36) +
-    "-" +
-    Math.random().toString(36).substring(2) +
-    "-" +
-    Math.random().toString(36).substring(2)
-  );
-
-}
-
-
 /* FORMULAIRE */
 
 function activerFormulaire(){
@@ -497,8 +469,9 @@ function verifier(){
 
 
   /*
-   * L'heure est créée immédiatement,
-   * au moment où le formulaire est terminé.
+   * L'heure est enregistrée
+   * au moment où le salarié
+   * termine le formulaire.
    */
 
   const maintenant =
@@ -518,24 +491,10 @@ function verifier(){
 
 
   /*
-   * IDENTIFIANT UNIQUE
-   *
-   * Cet identifiant reste le même
-   * pendant toute la synchronisation.
-   */
-
-  const pointageId =
-    creerPointageId();
-
-
-  /*
-   * CREATION DU POINTAGE
+   * POINTAGE
    */
 
   const pointage = {
-
-    pointageId:
-      pointageId,
 
     date:
       datePointage,
@@ -580,7 +539,7 @@ function verifier(){
 
 
   /*
-   * STOCKAGE LOCAL AVANT TOUT ENVOI
+   * STOCKAGE LOCAL
    */
 
   stocker(pointage)
@@ -600,11 +559,6 @@ function verifier(){
         "Stockage impossible :",
         error
       );
-
-      document.getElementById(
-        "message"
-      ).innerHTML =
-        "⚠️ Impossible d'enregistrer le pointage.";
 
     });
 
@@ -734,5 +688,314 @@ async function recupererPointages(){
 
 
   return new Promise(
-    function(resolve,
+    function(resolve,reject){
+
+      const transaction =
+        db.transaction(
+          "pointages",
+          "readonly"
+        );
+
+
+      const request =
+        transaction
+          .objectStore("pointages")
+          .getAll();
+
+
+      request.onsuccess =
+        function(){
+
+          resolve(
+            request.result
+          );
+
+        };
+
+
+      request.onerror =
+        function(){
+
+          reject(
+            request.error
+          );
+
+        };
+
+    }
+  );
+
+}
+
+
+/* SUPPRIMER APRÈS ENVOI */
+
+async function supprimer(id){
+
+  const db =
+    await ouvrirDB();
+
+
+  return new Promise(
+    function(resolve,reject){
+
+      const transaction =
+        db.transaction(
+          "pointages",
+          "readwrite"
+        );
+
+
+      const request =
+        transaction
+          .objectStore("pointages")
+          .delete(id);
+
+
+      request.onsuccess =
+        function(){
+
+          resolve();
+
+        };
+
+
+      request.onerror =
+        function(){
+
+          reject(
+            request.error
+          );
+
+        };
+
+    }
+  );
+
+}
+
+
+/* SYNCHRONISATION */
+
+async function synchroniser(){
+
+  if(!navigator.onLine){
+
+    const message =
+      document.getElementById(
+        "message"
+      );
+
+
+    if(message){
+
+      message.innerHTML =
+        "✅ Pointage enregistré.<br>" +
+        "<small>" +
+        "Il sera envoyé dès que la connexion revient." +
+        "</small>";
+
+    }
+
+
+    return;
+
+  }
+
+
+  if(
+    positionGPS &&
+    !communeGPS
+  ){
+
+    await rechercherCommune();
+
+  }
+
+
+  let liste = [];
+
+
+  try{
+
+    liste =
+      await recupererPointages();
+
+  }catch(error){
+
+    console.log(
+      "Lecture IndexedDB impossible",
+      error
+    );
+
+    return;
+
+  }
+
+
+  if(!liste.length){
+
+    return;
+
+  }
+
+
+  for(const pointage of liste){
+
+    try{
+
+      /*
+       * Recherche de la commune
+       * si elle n'était pas connue.
+       */
+
+      if(
+        (
+          !pointage.commune ||
+          pointage.commune ===
+          "Commune non déterminée"
+        ) &&
+        pointage.latitude !== null &&
+        pointage.longitude !== null
+      ){
+
+        try{
+
+          const url =
+            "https://data.geopf.fr/geocodage/reverse?" +
+            "lon=" +
+            encodeURIComponent(
+              pointage.longitude
+            ) +
+            "&lat=" +
+            encodeURIComponent(
+              pointage.latitude
+            );
+
+
+          const response =
+            await fetch(url);
+
+
+          if(response.ok){
+
+            const data =
+              await response.json();
+
+
+            if(
+              data &&
+              data.features &&
+              data.features.length
+            ){
+
+              const propriete =
+                data.features[0].properties;
+
+
+              pointage.commune =
+                propriete.city ||
+                propriete.municipality ||
+                propriete.label ||
+                pointage.commune;
+
+            }
+
+          }
+
+        }catch(error){
+
+          console.log(
+            "Commune non récupérée",
+            error
+          );
+
+        }
+
+      }
+
+
+      /*
+       * ENVOI À GOOGLE SHEETS
+       */
+
+      await fetch(
+
+        SERVEUR,
+
+        {
+
+          method:"POST",
+
+          mode:"no-cors",
+
+          headers:{
+
+            "Content-Type":
+              "text/plain;charset=utf-8"
+
+          },
+
+          body:
+            JSON.stringify(pointage)
+
+        }
+
+      );
+
+
+      /*
+       * Suppression locale après envoi.
+       */
+
+      await supprimer(
+        pointage.id
+      );
+
+
+    }catch(error){
+
+      console.log(
+        "Envoi impossible",
+        error
+      );
+
+      break;
+
+    }
+
+  }
+
+
+  document.getElementById(
+    "message"
+  ).innerHTML =
+    "✅ POINTAGE ENREGISTRÉ AUTOMATIQUEMENT";
+
+}
+
+
+/* INTERNET REVIENT */
+
+window.addEventListener(
+  "online",
+  function(){
+
+    synchroniser();
+
+  }
+);
+
+
+/* SYNCHRONISATION RÉGULIÈRE */
+
+setInterval(
+  synchroniser,
+  30000
+);
+
+</script>
+
+</body>
+</html>
 ```
