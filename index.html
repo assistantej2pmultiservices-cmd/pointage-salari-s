@@ -1,6 +1,5 @@
 ```html
 <!DOCTYPE html>
-
 <html lang="fr">
 <head>
 
@@ -101,7 +100,6 @@ input,select{
   autocomplete="off"
 >
 
-
 <label>PRÉNOM</label>
 
 <input
@@ -110,7 +108,6 @@ input,select{
   autocomplete="off"
 >
 
-
 <label>SITE D'INTERVENTION</label>
 
 <input
@@ -118,7 +115,6 @@ input,select{
   type="text"
   autocomplete="off"
 >
-
 
 <label>TYPE DE POINTAGE</label>
 
@@ -138,7 +134,6 @@ Heure de fin de prestation
 
 </select>
 
-
 <div id="message"></div>
 
 </div>
@@ -147,7 +142,6 @@ Heure de fin de prestation
 
 
 <script>
-
 
 /* SERVEUR GOOGLE SHEETS */
 
@@ -162,6 +156,8 @@ let positionGPS = null;
 let communeGPS = null;
 
 let enregistrementLance = false;
+
+let synchronisationEnCours = false;
 
 
 /* SERVICE WORKER */
@@ -245,12 +241,7 @@ function lancerGPS(){
         "✅ Position GPS enregistrée";
 
 
-      /*
-       * Recherche de la commune
-       */
-
       await rechercherCommune();
-
 
     },
 
@@ -279,7 +270,6 @@ function lancerGPS(){
       }
 
     },
-
 
     {
 
@@ -324,11 +314,6 @@ async function rechercherCommune(){
     const longitude =
       positionGPS.longitude;
 
-
-    /*
-     * Service officiel de géocodage
-     * de la Géoplateforme / BAN
-     */
 
     const url =
       "https://data.geopf.fr/geocodage/reverse?" +
@@ -397,6 +382,31 @@ async function rechercherCommune(){
     communeGPS = null;
 
   }
+
+}
+
+
+/* CREATION D'UN IDENTIFIANT UNIQUE */
+
+function creerPointageId(){
+
+  if(
+    window.crypto &&
+    typeof window.crypto.randomUUID === "function"
+  ){
+
+    return window.crypto.randomUUID();
+
+  }
+
+
+  return (
+    Date.now().toString(36) +
+    "-" +
+    Math.random().toString(36).substring(2) +
+    "-" +
+    Math.random().toString(36).substring(2)
+  );
 
 }
 
@@ -471,10 +481,6 @@ function verifier(){
       .value;
 
 
-  /*
-   * Tous les champs doivent être remplis.
-   */
-
   if(
     !nom ||
     !prenom ||
@@ -491,14 +497,8 @@ function verifier(){
 
 
   /*
-   * IMPORTANT :
-   *
-   * L'heure est créée ICI,
-   * au moment où le formulaire
-   * est terminé.
-   *
-   * Elle ne sera PAS recalculée
-   * lorsque Internet reviendra.
+   * L'heure est créée immédiatement,
+   * au moment où le formulaire est terminé.
    */
 
   const maintenant =
@@ -518,10 +518,24 @@ function verifier(){
 
 
   /*
+   * IDENTIFIANT UNIQUE
+   *
+   * Cet identifiant reste le même
+   * pendant toute la synchronisation.
+   */
+
+  const pointageId =
+    creerPointageId();
+
+
+  /*
    * CREATION DU POINTAGE
    */
 
   const pointage = {
+
+    pointageId:
+      pointageId,
 
     date:
       datePointage,
@@ -566,23 +580,33 @@ function verifier(){
 
 
   /*
-   * STOCKAGE LOCAL
+   * STOCKAGE LOCAL AVANT TOUT ENVOI
    */
 
-  stocker(pointage);
+  stocker(pointage)
+    .then(function(){
 
+      document.getElementById(
+        "message"
+      ).innerHTML =
+        "⏳ Pointage enregistré...";
 
-  document.getElementById(
-    "message"
-  ).innerHTML =
-    "⏳ Pointage enregistré localement...";
+      synchroniser();
 
+    })
+    .catch(function(error){
 
-  /*
-   * TENTATIVE D'ENVOI
-   */
+      console.log(
+        "Stockage impossible :",
+        error
+      );
 
-  synchroniser();
+      document.getElementById(
+        "message"
+      ).innerHTML =
+        "⚠️ Impossible d'enregistrer le pointage.";
+
+    });
 
 }
 
@@ -656,40 +680,6 @@ function ouvrirDB(){
 
 async function stocker(pointage){
 
-  try{
-
-    const db =
-      await ouvrirDB();
-
-
-    const transaction =
-      db.transaction(
-        "pointages",
-        "readwrite"
-      );
-
-
-    transaction
-      .objectStore("pointages")
-      .add(pointage);
-
-
-  }catch(error){
-
-    console.log(
-      "Stockage impossible :",
-      error
-    );
-
-  }
-
-}
-
-
-/* RÉCUPÉRER */
-
-async function recupererPointages(){
-
   const db =
     await ouvrirDB();
 
@@ -700,14 +690,14 @@ async function recupererPointages(){
       const transaction =
         db.transaction(
           "pointages",
-          "readonly"
+          "readwrite"
         );
 
 
       const request =
         transaction
           .objectStore("pointages")
-          .getAll();
+          .add(pointage);
 
 
       request.onsuccess =
@@ -735,263 +725,14 @@ async function recupererPointages(){
 }
 
 
-/* SUPPRIMER APRÈS ENVOI */
+/* RÉCUPÉRER */
 
-async function supprimer(id){
+async function recupererPointages(){
 
   const db =
     await ouvrirDB();
 
 
-  const transaction =
-    db.transaction(
-      "pointages",
-      "readwrite"
-    );
-
-
-  transaction
-    .objectStore("pointages")
-    .delete(id);
-
-}
-
-
-/* SYNCHRONISATION */
-
-async function synchroniser(){
-
-  if(!navigator.onLine){
-
-    const message =
-      document.getElementById(
-        "message"
-      );
-
-
-    if(message){
-
-      message.innerHTML =
-        "✅ Pointage enregistré.<br>" +
-        "<small>" +
-        "Il sera envoyé dès que la connexion revient." +
-        "</small>";
-
-    }
-
-
-    return;
-
-  }
-
-
-  /*
-   * On tente de récupérer
-   * la commune si elle n'était
-   * pas disponible au moment
-   * du pointage.
-   */
-
-  if(
-    positionGPS &&
-    !communeGPS
-  ){
-
-    await rechercherCommune();
-
-  }
-
-
-  let liste = [];
-
-
-  try{
-
-    liste =
-      await recupererPointages();
-
-  }catch(error){
-
-    console.log(
-      "Lecture IndexedDB impossible",
-      error
-    );
-
-    return;
-
-  }
-
-
-  if(!liste.length){
-
-    return;
-
-  }
-
-
-  for(const pointage of liste){
-
-    try{
-
-      /*
-       * Si la commune n'était
-       * pas connue au départ,
-       * on essaie de la compléter
-       * avec les coordonnées GPS.
-       */
-
-      if(
-        (
-          !pointage.commune ||
-          pointage.commune ===
-          "Commune non déterminée"
-        ) &&
-        pointage.latitude !== null &&
-        pointage.longitude !== null
-      ){
-
-        try{
-
-          const url =
-            "https://data.geopf.fr/geocodage/reverse?" +
-            "lon=" +
-            encodeURIComponent(
-              pointage.longitude
-            ) +
-            "&lat=" +
-            encodeURIComponent(
-              pointage.latitude
-            );
-
-
-          const response =
-            await fetch(url);
-
-
-          if(response.ok){
-
-            const data =
-              await response.json();
-
-
-            if(
-              data &&
-              data.features &&
-              data.features.length
-            ){
-
-              const propriete =
-                data.features[0].properties;
-
-
-              pointage.commune =
-                propriete.city ||
-                propriete.municipality ||
-                propriete.label ||
-                pointage.commune;
-
-            }
-
-          }
-
-        }catch(error){
-
-          console.log(
-            "Commune non récupérée",
-            error
-          );
-
-        }
-
-      }
-
-
-      /*
-       * ENVOI À GOOGLE SHEETS
-       *
-       * L'objet contient toujours
-       * l'heure enregistrée au
-       * moment du pointage.
-       */
-
-      await fetch(
-
-        SERVEUR,
-
-        {
-
-          method:"POST",
-
-          mode:"no-cors",
-
-          headers:{
-
-            "Content-Type":
-              "text/plain;charset=utf-8"
-
-          },
-
-          body:
-            JSON.stringify(pointage)
-
-        }
-
-      );
-
-
-      /*
-       * Suppression locale
-       * uniquement après l'envoi.
-       */
-
-      await supprimer(
-        pointage.id
-      );
-
-
-    }catch(error){
-
-      console.log(
-        "Envoi impossible",
-        error
-      );
-
-      break;
-
-    }
-
-  }
-
-
-  document.getElementById(
-    "message"
-  ).innerHTML =
-    "✅ POINTAGE ENREGISTRÉ AUTOMATIQUEMENT";
-
-}
-
-
-/* INTERNET REVIENT */
-
-window.addEventListener(
-  "online",
-  function(){
-
-    synchroniser();
-
-  }
-);
-
-
-/* SYNCHRONISATION RÉGULIÈRE */
-
-setInterval(
-  synchroniser,
-  30000
-);
-
-</script>
-
-</body>
-</html>
+  return new Promise(
+    function(resolve,
 ```
