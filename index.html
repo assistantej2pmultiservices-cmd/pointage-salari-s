@@ -1,260 +1,291 @@
-```html
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Pointage salarié</title>
+<title>Pointage salarié</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 500px;
-      margin: auto;
-      padding: 20px;
-    }
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  margin: 0;
+  padding: 20px;
+}
 
-    h1 {
-      text-align: center;
-    }
+.container {
+  max-width: 500px;
+  margin: auto;
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
 
-    input, select {
-      width: 100%;
-      padding: 14px;
-      margin: 8px 0;
-      box-sizing: border-box;
-      font-size: 16px;
-    }
+h1 {
+  text-align: center;
+}
 
-    button {
-      width: 100%;
-      padding: 15px;
-      margin-top: 10px;
-      font-size: 18px;
-      cursor: pointer;
-    }
+label {
+  display: block;
+  margin-top: 15px;
+  font-weight: bold;
+}
 
-    #message {
-      text-align: center;
-      margin-top: 20px;
-      font-weight: bold;
-    }
-  </style>
+input,
+select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  margin-top: 6px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+button {
+  width: 100%;
+  margin-top: 25px;
+  padding: 14px;
+  font-size: 17px;
+  border: none;
+  border-radius: 6px;
+  background: #1a73e8;
+  color: white;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #999;
+}
+
+#message {
+  margin-top: 20px;
+  text-align: center;
+  font-weight: bold;
+}
+
+#gps {
+  margin-top: 15px;
+  padding: 10px;
+  background: #f1f1f1;
+  border-radius: 6px;
+  font-size: 14px;
+}
+</style>
 </head>
 
 <body>
 
+<div class="container">
+
 <h1>Pointage salarié</h1>
 
-<form id="formulaire">
+<form id="formPointage">
 
-  <input
-    type="text"
-    id="nom"
-    placeholder="Nom"
-    required
-  >
+<label>Nom</label>
+<input
+  type="text"
+  id="nom"
+  required
+>
 
-  <input
-    type="text"
-    id="prenom"
-    placeholder="Prénom"
-    required
-  >
+<label>Prénom</label>
+<input
+  type="text"
+  id="prenom"
+  required
+>
 
-  <input
-    type="text"
-    id="site"
-    placeholder="Site"
-    required
-  >
+<label>Site</label>
+<input
+  type="text"
+  id="site"
+  required
+>
 
-  <select id="type" required>
-    <option value="">Type de pointage</option>
-    <option value="ARRIVEE">Arrivée</option>
-    <option value="DEPART">Départ</option>
-  </select>
+<label>Type de pointage</label>
+<select id="type" required>
+  <option value="">Sélectionner</option>
+  <option value="Arrivée">Arrivée</option>
+  <option value="Départ">Départ</option>
+  <option value="Pause début">Pause début</option>
+  <option value="Pause fin">Pause fin</option>
+</select>
 
-  <button type="submit">
-    ENREGISTRER LE POINTAGE
-  </button>
+<div id="gps">
+GPS : recherche de la position...
+</div>
+
+<button
+  type="submit"
+  id="bouton"
+>
+  ENREGISTRER LE POINTAGE
+</button>
+
+<div id="message"></div>
 
 </form>
 
-<div id="message"></div>
+</div>
 
 <script>
 
 const SERVEUR =
 "https://script.google.com/macros/s/AKfycbwq6-57RFAb7Pt9BOL4wIJapZ4mPqfsEXy-yIx1WhkykXrWPbNo0gxoIm4Kj9upf0dj/exec";
 
-let latitude = "";
-let longitude = "";
-let precision = "";
-let commune = "";
+var positionGPS = {
+  latitude: "",
+  longitude: "",
+  precision: ""
+};
 
+function obtenirGPS() {
 
-/* GPS */
+  var zoneGPS =
+    document.getElementById("gps");
 
-if (navigator.geolocation) {
+  if (!navigator.geolocation) {
+
+    zoneGPS.textContent =
+      "GPS non disponible";
+
+    return;
+  }
 
   navigator.geolocation.getCurrentPosition(
 
     function(position) {
 
-      latitude = position.coords.latitude;
-      longitude = position.coords.longitude;
-      precision = position.coords.accuracy;
+      positionGPS.latitude =
+        position.coords.latitude;
 
-      obtenirCommune(latitude, longitude);
+      positionGPS.longitude =
+        position.coords.longitude;
 
+      positionGPS.precision =
+        position.coords.accuracy;
+
+      zoneGPS.textContent =
+        "GPS OK - précision : " +
+        Math.round(position.coords.accuracy) +
+        " m";
     },
 
     function(error) {
 
-      console.log("GPS non disponible");
-
+      zoneGPS.textContent =
+        "GPS non disponible - pointage possible sans GPS";
     },
 
     {
       enableHighAccuracy: true,
-      timeout: 10000,
+      timeout: 15000,
       maximumAge: 0
     }
   );
 }
 
+document
+.getElementById("formPointage")
+.addEventListener("submit", async function(e) {
 
-/* Commune depuis GPS */
+  e.preventDefault();
 
-async function obtenirCommune(lat, lon) {
+  var bouton =
+    document.getElementById("bouton");
+
+  var message =
+    document.getElementById("message");
+
+  bouton.disabled = true;
+
+  message.textContent =
+    "Enregistrement en cours...";
+
+  var maintenant =
+    new Date();
+
+  var pointage = {
+
+    dateHeure:
+      maintenant.toISOString(),
+
+    nom:
+      document.getElementById("nom").value.trim(),
+
+    prenom:
+      document.getElementById("prenom").value.trim(),
+
+    site:
+      document.getElementById("site").value.trim(),
+
+    type:
+      document.getElementById("type").value,
+
+    latitude:
+      positionGPS.latitude,
+
+    longitude:
+      positionGPS.longitude,
+
+    precision:
+      positionGPS.precision
+  };
 
   try {
 
-    const url =
-      "https://data.geopf.fr/geocodage/reverse" +
-      "?lon=" + encodeURIComponent(lon) +
-      "&lat=" + encodeURIComponent(lat);
+    await fetch(SERVEUR, {
 
-    const response = await fetch(url);
+      method: "POST",
 
-    const resultat = await response.json();
+      mode: "no-cors",
 
-    if (
-      resultat.features &&
-      resultat.features.length > 0
-    ) {
+      headers: {
+        "Content-Type":
+          "text/plain;charset=utf-8"
+      },
 
-      const p =
-        resultat.features[0].properties;
+      body:
+        JSON.stringify(pointage)
+    });
 
-      commune =
-        p.city ||
-        p.municipality ||
-        p.label ||
-        "";
+    message.textContent =
+      "Pointage enregistré.";
 
-    }
+    message.style.color = "green";
+
+    document
+      .getElementById("formPointage")
+      .reset();
+
+    positionGPS = {
+      latitude: "",
+      longitude: "",
+      precision: ""
+    };
+
+    obtenirGPS();
 
   } catch (error) {
 
-    console.log("Commune non trouvée");
-
-  }
-}
-
-
-/* ENVOI */
-
-document
-  .getElementById("formulaire")
-  .addEventListener("submit", async function(event) {
-
-    event.preventDefault();
-
-    const message =
-      document.getElementById("message");
-
-    const maintenant = new Date();
-
-    const pointage = {
-
-      dateHeure:
-        maintenant.toISOString(),
-
-      nom:
-        document.getElementById("nom").value.trim(),
-
-      prenom:
-        document.getElementById("prenom").value.trim(),
-
-      site:
-        document.getElementById("site").value.trim(),
-
-      type:
-        document.getElementById("type").value,
-
-      latitude:
-        latitude,
-
-      longitude:
-        longitude,
-
-      precision:
-        precision,
-
-      commune:
-        commune
-
-    };
-
-
     message.textContent =
-      "Enregistrement en cours...";
+      "Erreur lors de l'enregistrement.";
 
+    message.style.color = "red";
 
-    try {
+  } finally {
 
-      await fetch(SERVEUR, {
+    bouton.disabled = false;
+  }
 
-        method: "POST",
+});
 
-        mode: "no-cors",
-
-        headers: {
-          "Content-Type":
-            "text/plain;charset=utf-8"
-        },
-
-        body:
-          JSON.stringify(pointage)
-
-      });
-
-
-      message.textContent =
-        "✅ Pointage enregistré";
-
-      document
-        .getElementById("formulaire")
-        .reset();
-
-    }
-
-    catch (error) {
-
-      console.log(error);
-
-      message.textContent =
-        "❌ Erreur d'enregistrement";
-
-    }
-
-  });
+obtenirGPS();
 
 </script>
 
 </body>
 </html>
-```
