@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -44,13 +45,14 @@ input,select{
   border-radius:8px;
   font-size:16px;
 }
-#formulaire{display:none}
+#formulaire{display:block}
 #message{
   text-align:center;
   font-weight:bold;
   margin-top:20px;
 }
 </style>
+
 </head>
 
 <body>
@@ -65,17 +67,14 @@ input,select{
 
 <div id="formulaire">
 
-<label>NOM</label>
-<input id="nom" type="text" autocomplete="off">
+<label>NOM</label> <input id="nom" type="text" autocomplete="off">
 
-<label>PRÉNOM</label>
-<input id="prenom" type="text" autocomplete="off">
+<label>PRÉNOM</label> <input id="prenom" type="text" autocomplete="off">
 
-<label>SITE D'INTERVENTION</label>
-<input id="site" type="text" autocomplete="off">
+<label>SITE D'INTERVENTION</label> <input id="site" type="text" autocomplete="off">
 
-<label>TYPE DE POINTAGE</label>
-<select id="type">
+<label>TYPE DE POINTAGE</label> <select id="type">
+
 <option value="">-- Sélectionnez --</option>
 <option value="Heure de début de prestation">
 Heure de début de prestation
@@ -118,14 +117,20 @@ if ("serviceWorker" in navigator) {
 }
 
 
-/* GPS EN PREMIER */
+/* FORMULAIRE DISPONIBLE IMMÉDIATEMENT */
 
 window.addEventListener("load", function() {
 
+  activerFormulaire();
+
   lancerGPS();
+
+  synchroniser();
 
 });
 
+
+/* GPS */
 
 function lancerGPS(){
 
@@ -137,7 +142,8 @@ function lancerGPS(){
     bloc.className="erreur";
 
     bloc.innerHTML =
-      "❌ GPS non disponible sur ce téléphone.";
+      "⚠️ GPS non disponible.<br>" +
+      "<small>Vous pouvez quand même effectuer le pointage.</small>";
 
     return;
 
@@ -165,14 +171,6 @@ function lancerGPS(){
       bloc.innerHTML =
         "✅ Position GPS enregistrée";
 
-      document.getElementById(
-        "formulaire"
-      ).style.display="block";
-
-      activerFormulaire();
-
-      synchroniser();
-
     },
 
     function(error){
@@ -182,12 +180,14 @@ function lancerGPS(){
       if(error.code===1){
 
         bloc.innerHTML =
-          "❌ Autorisez la localisation du téléphone.";
+          "⚠️ Localisation non autorisée.<br>" +
+          "<small>Le pointage reste possible sans GPS.</small>";
 
       }else{
 
         bloc.innerHTML =
-          "❌ Position GPS impossible à obtenir.";
+          "⚠️ Position GPS indisponible.<br>" +
+          "<small>Le pointage reste possible sans GPS.</small>";
 
       }
 
@@ -235,8 +235,6 @@ function verifier(){
 
   if(enregistrementLance) return;
 
-  if(!positionGPS) return;
-
   const nom =
     document.getElementById("nom")
     .value.trim();
@@ -274,13 +272,19 @@ function verifier(){
     type:type,
 
     latitude:
-      positionGPS.latitude,
+      positionGPS
+        ? positionGPS.latitude
+        : null,
 
     longitude:
-      positionGPS.longitude,
+      positionGPS
+        ? positionGPS.longitude
+        : null,
 
     precision:
-      positionGPS.precision
+      positionGPS
+        ? positionGPS.precision
+        : null
 
   };
 
@@ -468,6 +472,11 @@ async function synchroniser(){
       await recupererPointages();
 
   }catch(error){
+
+    console.log(
+      "Lecture IndexedDB impossible",
+      error
+    );
 
     return;
 
