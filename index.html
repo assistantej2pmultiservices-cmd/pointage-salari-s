@@ -1,169 +1,579 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pointage salarié</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pointage</title>
+
+<style>
+body{
+  font-family:Arial,sans-serif;
+  background:#f4f4f4;
+  margin:0;
+  padding:20px;
+}
+.box{
+  max-width:500px;
+  margin:auto;
+  background:white;
+  padding:25px;
+  border-radius:15px;
+}
+h2{text-align:center}
+#gps{
+  padding:18px;
+  text-align:center;
+  border-radius:10px;
+  margin-bottom:20px;
+  background:#e8f1ff;
+  font-weight:bold;
+}
+.ok{background:#e8f5e9!important;color:#176b20}
+.erreur{background:#ffebee!important;color:#b00020}
+label{
+  display:block;
+  font-weight:bold;
+  margin-top:15px;
+}
+input,select{
+  width:100%;
+  box-sizing:border-box;
+  padding:14px;
+  margin-top:6px;
+  border:1px solid #ccc;
+  border-radius:8px;
+  font-size:16px;
+}
+#formulaire{display:none}
+#message{
+  text-align:center;
+  font-weight:bold;
+  margin-top:20px;
+}
+</style>
 </head>
 
 <body>
 
+<div class="box">
+
 <h2>📍 POINTAGE</h2>
 
 <div id="gps">
-  📍 Recherche de votre position...
+📍 Recherche de votre position...
 </div>
 
-<div id="formulaire" style="display:none;">
+<div id="formulaire">
 
-  <label>NOM</label><br>
-  <input id="nom" type="text"><br><br>
+<label>NOM</label>
+<input id="nom" type="text" autocomplete="off">
 
-  <label>PRÉNOM</label><br>
-  <input id="prenom" type="text"><br><br>
+<label>PRÉNOM</label>
+<input id="prenom" type="text" autocomplete="off">
 
-  <label>SITE D'INTERVENTION</label><br>
-  <input id="site" type="text"><br><br>
+<label>SITE D'INTERVENTION</label>
+<input id="site" type="text" autocomplete="off">
 
-  <label>TYPE DE POINTAGE</label><br>
-  <select id="type">
-    <option value="">-- Sélectionnez --</option>
-    <option value="Heure de début de prestation">
-      Heure de début de prestation
-    </option>
-    <option value="Heure de fin de prestation">
-      Heure de fin de prestation
-    </option>
-  </select>
+<label>TYPE DE POINTAGE</label>
+<select id="type">
+<option value="">-- Sélectionnez --</option>
+<option value="Heure de début de prestation">
+Heure de début de prestation
+</option>
+<option value="Heure de fin de prestation">
+Heure de fin de prestation
+</option>
+</select>
 
-  <p id="message"></p>
+<div id="message"></div>
+
+</div>
 
 </div>
 
 <script>
 
-let gps = null;
-let enregistre = false;
+const SERVEUR =
+"https://script.google.com/macros/s/AKfycbwq6-57RFAb7Pt9BOL4wIJapZ4mPqfsEXy-yIx1WhkykXrWPbNo0gxoIm4Kj9upf0dj/exec";
 
-window.onload = function() {
+let positionGPS = null;
+let enregistrementLance = false;
 
-  navigator.geolocation.getCurrentPosition(
 
-    function(position) {
+/************************************************
+ * SERVICE WORKER
+ ************************************************/
 
-      gps = {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        precision: position.coords.accuracy
-      };
+if ("serviceWorker" in navigator) {
 
-      document.getElementById("gps").innerHTML =
-        "✅ Position GPS enregistrée";
+  window.addEventListener("load", function() {
 
-      document.getElementById("formulaire").style.display =
-        "block";
+    navigator.serviceWorker.register("./sw.js")
+      .catch(function(error) {
 
-      document.querySelectorAll(
-        "#nom,#prenom,#site,#type"
-      ).forEach(function(champ) {
-
-        champ.addEventListener("input", verifier);
-        champ.addEventListener("change", verifier);
+        console.log(
+          "Service Worker : ",
+          error
+        );
 
       });
 
+  });
+
+}
+
+
+/************************************************
+ * GPS EN PREMIER
+ ************************************************/
+
+window.addEventListener("load", function() {
+
+  lancerGPS();
+
+});
+
+
+function lancerGPS(){
+
+  const bloc =
+    document.getElementById("gps");
+
+  if (!navigator.geolocation){
+
+    bloc.className="erreur";
+
+    bloc.innerHTML =
+      "❌ GPS non disponible sur ce téléphone.";
+
+    return;
+
+  }
+
+  navigator.geolocation.getCurrentPosition(
+
+    function(position){
+
+      positionGPS = {
+
+        latitude:
+          position.coords.latitude,
+
+        longitude:
+          position.coords.longitude,
+
+        precision:
+          position.coords.accuracy
+
+      };
+
+      bloc.className="ok";
+
+      bloc.innerHTML =
+        "✅ Position GPS enregistrée";
+
+      document.getElementById(
+        "formulaire"
+      ).style.display="block";
+
+      activerFormulaire();
+
+      synchroniser();
+
     },
 
-    function() {
+    function(error){
 
-      document.getElementById("gps").innerHTML =
-        "❌ Impossible d'obtenir la localisation.";
+      bloc.className="erreur";
+
+      if(error.code===1){
+
+        bloc.innerHTML =
+          "❌ Autorisez la localisation du téléphone.";
+
+      }else{
+
+        bloc.innerHTML =
+          "❌ Position GPS impossible à obtenir.";
+
+      }
 
     },
 
     {
-      enableHighAccuracy: true,
-      timeout: 30000,
-      maximumAge: 0
+      enableHighAccuracy:true,
+      timeout:30000,
+      maximumAge:0
     }
 
   );
 
-};
+}
 
 
-function verifier() {
+/************************************************
+ * FORMULAIRE
+ ************************************************/
 
-  if (enregistre || !gps) return;
+function activerFormulaire(){
+
+  ["nom","prenom","site","type"]
+  .forEach(function(id){
+
+    const element =
+      document.getElementById(id);
+
+    element.addEventListener(
+      "input",
+      verifier
+    );
+
+    element.addEventListener(
+      "change",
+      verifier
+    );
+
+  });
+
+}
+
+
+/************************************************
+ * VERIFICATION
+ ************************************************/
+
+function verifier(){
+
+  if(enregistrementLance) return;
+
+  if(!positionGPS) return;
 
   const nom =
-    document.getElementById("nom").value.trim();
+    document.getElementById("nom")
+    .value.trim();
 
   const prenom =
-    document.getElementById("prenom").value.trim();
+    document.getElementById("prenom")
+    .value.trim();
 
   const site =
-    document.getElementById("site").value.trim();
+    document.getElementById("site")
+    .value.trim();
 
   const type =
-    document.getElementById("type").value;
+    document.getElementById("type")
+    .value;
 
-  if (!nom || !prenom || !site || !type) return;
+  if(
+    !nom ||
+    !prenom ||
+    !site ||
+    !type
+  ){
 
-  enregistre = true;
+    return;
 
-  const pointage = {
+  }
 
-    date: new Date().toISOString(),
+  enregistrementLance=true;
 
-    nom: nom,
+  const pointage={
 
-    prenom: prenom,
+    date:new Date().toISOString(),
 
-    site: site,
+    nom:nom,
 
-    type: type,
+    prenom:prenom,
 
-    latitude: gps.latitude,
+    site:site,
 
-    longitude: gps.longitude,
+    type:type,
 
-    precision: gps.precision
+    latitude:
+      positionGPS.latitude,
+
+    longitude:
+      positionGPS.longitude,
+
+    precision:
+      positionGPS.precision
 
   };
 
-  localStorage.setItem(
-    "pointage_en_attente",
-    JSON.stringify(pointage)
-  );
+  /********************************************
+   * STOCKAGE LOCAL IMMÉDIAT
+   ********************************************/
 
-  document.getElementById("message").innerHTML =
-    "⏳ Enregistrement automatique...";
+  stocker(pointage);
 
-  envoyer(pointage);
+  document.getElementById(
+    "message"
+  ).innerHTML =
+    "⏳ Pointage enregistré localement...";
+
+  /********************************************
+   * TENTATIVE D'ENVOI
+   ********************************************/
+
+  synchroniser();
 
 }
 
 
-function envoyer(pointage) {
+/************************************************
+ * STOCKAGE INDEXEDDB
+ ************************************************/
 
-  /*
-   * L'adresse de ton Apps Script
-   * sera ajoutée à l'étape suivante.
-   */
+function ouvrirDB(){
 
-  if (!navigator.onLine) {
+  return new Promise(function(resolve,reject){
 
-    document.getElementById("message").innerHTML =
-      "✅ Pointage enregistré sur le téléphone.<br>" +
-      "Il sera envoyé dès le retour d'Internet.";
+    const request =
+      indexedDB.open(
+        "POINTAGE_DB",
+        1
+      );
 
-    return;
+    request.onupgradeneeded =
+      function(event){
+
+        const db =
+          event.target.result;
+
+        if(!db.objectStoreNames.contains("pointages")){
+
+          db.createObjectStore(
+            "pointages",
+            {
+              keyPath:"id",
+              autoIncrement:true
+            }
+          );
+
+        }
+
+      };
+
+    request.onsuccess =
+      function(){
+
+        resolve(request.result);
+
+      };
+
+    request.onerror =
+      function(){
+
+        reject(request.error);
+
+      };
+
+  });
+
+}
+
+
+async function stocker(pointage){
+
+  try{
+
+    const db =
+      await ouvrirDB();
+
+    const transaction =
+      db.transaction(
+        "pointages",
+        "readwrite"
+      );
+
+    transaction.objectStore(
+      "pointages"
+    ).add(pointage);
+
+  }catch(error){
+
+    console.log(error);
+
   }
 
-  // Connexion au serveur ajoutée à l'étape suivante.
+}
+
+
+/************************************************
+ * RÉCUPÉRER LES POINTAGES
+ ************************************************/
+
+async function recupererPointages(){
+
+  const db =
+    await ouvrirDB();
+
+  return new Promise(function(resolve,reject){
+
+    const transaction =
+      db.transaction(
+        "pointages",
+        "readonly"
+      );
+
+    const request =
+      transaction
+      .objectStore("pointages")
+      .getAll();
+
+    request.onsuccess =
+      function(){
+
+        resolve(request.result);
+
+      };
+
+    request.onerror =
+      function(){
+
+        reject(request.error);
+
+      };
+
+  });
 
 }
+
+
+/************************************************
+ * SUPPRIMER UN POINTAGE ENVOYÉ
+ ************************************************/
+
+async function supprimer(id){
+
+  const db =
+    await ouvrirDB();
+
+  const transaction =
+    db.transaction(
+      "pointages",
+      "readwrite"
+    );
+
+  transaction
+    .objectStore("pointages")
+    .delete(id);
+
+}
+
+
+/************************************************
+ * SYNCHRONISATION
+ ************************************************/
+
+async function synchroniser(){
+
+  if(!navigator.onLine){
+
+    document.getElementById(
+      "message"
+    ).innerHTML =
+      "✅ Pointage enregistré.<br>" +
+      "<small>Il sera envoyé dès que la connexion revient.</small>";
+
+    return;
+
+  }
+
+  let liste=[];
+
+  try{
+
+    liste =
+      await recupererPointages();
+
+  }catch(error){
+
+    return;
+
+  }
+
+  if(!liste.length) return;
+
+
+  for(const pointage of liste){
+
+    try{
+
+      await fetch(
+
+        SERVEUR,
+
+        {
+
+          method:"POST",
+
+          mode:"no-cors",
+
+          headers:{
+            "Content-Type":
+              "text/plain;charset=utf-8"
+          },
+
+          body:
+            JSON.stringify(pointage)
+
+        }
+
+      );
+
+      await supprimer(
+        pointage.id
+      );
+
+    }catch(error){
+
+      console.log(
+        "Envoi impossible",
+        error
+      );
+
+      break;
+
+    }
+
+  }
+
+
+  if(liste.length){
+
+    document.getElementById(
+      "message"
+    ).innerHTML =
+      "✅ POINTAGE ENREGISTRÉ AUTOMATIQUEMENT";
+
+  }
+
+}
+
+
+/************************************************
+ * INTERNET REVIENT
+ ************************************************/
+
+window.addEventListener(
+  "online",
+  function(){
+
+    synchroniser();
+
+  }
+);
+
+
+/************************************************
+ * SYNCHRONISATION RÉGULIÈRE
+ ************************************************/
+
+setInterval(
+  synchroniser,
+  30000
+);
 
 </script>
 
