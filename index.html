@@ -3,62 +3,57 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Pointage salarié</title>
 
 <style>
 body {
-  font-family: Arial, sans-serif;
-  background: #f2f2f2;
-  padding: 20px;
+  font-family: Arial,sans-serif;
+  background:#f2f2f2;
+  margin:0;
+  padding:20px;
 }
-
-form {
-  max-width: 450px;
-  margin: auto;
-  background: white;
-  padding: 25px;
-  border-radius: 12px;
+.container {
+  max-width:450px;
+  margin:auto;
+  background:white;
+  padding:25px;
+  border-radius:12px;
 }
-
-h1 {
-  text-align: center;
-}
-
+h1 { text-align:center; }
 label {
-  display: block;
-  margin-top: 15px;
-  font-weight: bold;
+  display:block;
+  margin-top:15px;
+  font-weight:bold;
 }
-
-input, select, button {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px;
-  margin-top: 5px;
-  font-size: 16px;
+input,select,button {
+  width:100%;
+  box-sizing:border-box;
+  padding:13px;
+  margin-top:6px;
+  font-size:16px;
 }
-
 button {
-  margin-top: 25px;
-  background: #1a73e8;
-  color: white;
-  border: 0;
-  border-radius: 6px;
+  margin-top:25px;
+  border:0;
+  border-radius:6px;
+  background:#1a73e8;
+  color:white;
 }
-
-#gps, #message {
-  margin-top: 15px;
-  text-align: center;
+#gps,#message {
+  margin-top:15px;
+  text-align:center;
 }
 </style>
 </head>
 
 <body>
 
-<form id="form">
+<div class="container">
 
 <h1>Pointage salarié</h1>
+
+<form id="form">
 
 <label>Nom</label>
 <input id="nom" required>
@@ -71,120 +66,253 @@ button {
 
 <label>Type de pointage</label>
 <select id="type" required>
-  <option value="">Choisir</option>
-  <option value="Arrivée">Arrivée</option>
-  <option value="Départ">Départ</option>
-  <option value="Pause début">Pause début</option>
-  <option value="Pause fin">Pause fin</option>
+<option value="">Choisir</option>
+<option>Arrivée</option>
+<option>Départ</option>
+<option>Pause début</option>
+<option>Pause fin</option>
 </select>
 
-<div id="gps">Recherche GPS...</div>
+<div id="gps">Recherche du GPS...</div>
 
-<button type="submit">ENREGISTRER</button>
+<button type="submit" id="bouton">
+ENREGISTRER LE POINTAGE
+</button>
 
 <div id="message"></div>
 
 </form>
+</div>
 
 <script>
 
 const SERVEUR =
-"https://script.google.com/macros/s/AKfycbwq6-57RFAb7Pt9BOL4wIJapZ4mPqfsEXy-yIx1WhkykXrWPbNo0gxoIm4Kj9upf0dj/exec";
+"COLLE_ICI_TON_URL_APPS_SCRIPT";
 
-let latitude = "";
-let longitude = "";
-let precision = "";
+let gps = {
+  latitude:"",
+  longitude:"",
+  precision:""
+};
 
-navigator.geolocation.getCurrentPosition(
 
-  function(position) {
+/* GPS */
 
-    latitude = position.coords.latitude;
-    longitude = position.coords.longitude;
-    precision = position.coords.accuracy;
+function obtenirGPS() {
 
-    document.getElementById("gps").textContent =
-      "GPS activé ✔";
-
-  },
-
-  function() {
-
+  if (!navigator.geolocation) {
     document.getElementById("gps").textContent =
       "GPS non disponible";
-
-  },
-
-  {
-    enableHighAccuracy: true,
-    timeout: 15000,
-    maximumAge: 0
+    return;
   }
-);
+
+  navigator.geolocation.getCurrentPosition(
+
+    function(position) {
+
+      gps.latitude =
+        position.coords.latitude;
+
+      gps.longitude =
+        position.coords.longitude;
+
+      gps.precision =
+        position.coords.accuracy;
+
+      document.getElementById("gps").textContent =
+        "GPS activé ✔";
+
+    },
+
+    function() {
+
+      document.getElementById("gps").textContent =
+        "GPS non autorisé";
+
+    },
+
+    {
+      enableHighAccuracy:true,
+      timeout:15000,
+      maximumAge:0
+    }
+  );
+}
 
 
-document.getElementById("form")
+/* STOCKAGE HORS CONNEXION */
+
+function chargerPointages() {
+
+  return JSON.parse(
+    localStorage.getItem("pointages") || "[]"
+  );
+
+}
+
+
+function sauvegarderPointages(pointages) {
+
+  localStorage.setItem(
+    "pointages",
+    JSON.stringify(pointages)
+  );
+
+}
+
+
+/* ENVOI GOOGLE SHEETS */
+
+async function envoyerPointage(pointage) {
+
+  await fetch(SERVEUR, {
+
+    method:"POST",
+
+    mode:"no-cors",
+
+    headers:{
+      "Content-Type":
+      "text/plain;charset=utf-8"
+    },
+
+    body:JSON.stringify(pointage)
+
+  });
+
+}
+
+
+/* SYNCHRONISATION */
+
+async function synchroniser() {
+
+  if (!navigator.onLine) return;
+
+  let pointages =
+    chargerPointages();
+
+  if (pointages.length === 0) return;
+
+  let restants = [];
+
+  for (const pointage of pointages) {
+
+    try {
+
+      await envoyerPointage(pointage);
+
+    } catch (erreur) {
+
+      restants.push(pointage);
+
+    }
+
+  }
+
+  sauvegarderPointages(restants);
+
+}
+
+
+/* FORMULAIRE */
+
+document
+.getElementById("form")
 .addEventListener("submit", async function(e) {
 
   e.preventDefault();
 
+  const bouton =
+    document.getElementById("bouton");
+
   const message =
     document.getElementById("message");
 
-  const donnees = {
+  bouton.disabled = true;
 
-    dateHeure: new Date().toISOString(),
+  const pointage = {
+
+    dateHeure:
+      new Date().toISOString(),
 
     nom:
-      document.getElementById("nom").value,
+      document.getElementById("nom")
+      .value.trim(),
 
     prenom:
-      document.getElementById("prenom").value,
+      document.getElementById("prenom")
+      .value.trim(),
 
     site:
-      document.getElementById("site").value,
+      document.getElementById("site")
+      .value.trim(),
 
     type:
-      document.getElementById("type").value,
+      document.getElementById("type")
+      .value,
 
-    latitude: latitude,
+    latitude:
+      gps.latitude,
 
-    longitude: longitude,
+    longitude:
+      gps.longitude,
 
-    precision: precision
+    precision:
+      gps.precision
   };
 
-  message.textContent =
-    "Envoi en cours...";
 
-  try {
+  /* Toujours sauvegarder d'abord */
 
-    await fetch(SERVEUR, {
-      method: "POST",
-      mode: "no-cors",
-      headers: {
-        "Content-Type":
-          "text/plain;charset=utf-8"
-      },
-      body: JSON.stringify(donnees)
-    });
+  let pointages =
+    chargerPointages();
+
+  pointages.push(pointage);
+
+  sauvegarderPointages(pointages);
+
+
+  /* Tentative d'envoi immédiat */
+
+  if (navigator.onLine) {
+
+    await synchroniser();
 
     message.textContent =
       "Pointage enregistré ✔";
 
-    message.style.color = "green";
-
-    document.getElementById("form").reset();
-
-  } catch (error) {
+  } else {
 
     message.textContent =
-      "Erreur d'envoi";
+      "Hors connexion : pointage sauvegardé ✔";
 
-    message.style.color = "red";
   }
 
+  message.style.color = "green";
+
+  document
+    .getElementById("form")
+    .reset();
+
+  bouton.disabled = false;
+
 });
+
+
+/* Quand Internet revient */
+
+window.addEventListener(
+  "online",
+  synchroniser
+);
+
+
+/* Au démarrage */
+
+obtenirGPS();
+
+synchroniser();
 
 </script>
 
