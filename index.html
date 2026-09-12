@@ -31,9 +31,7 @@ label {
   font-weight: bold;
 }
 
-input,
-select,
-button {
+input, select, button {
   width: 100%;
   box-sizing: border-box;
   padding: 13px;
@@ -54,9 +52,7 @@ button:disabled {
   opacity: 0.6;
 }
 
-#gps,
-#message,
-#attente {
+#gps, #message, #attente {
   margin-top: 15px;
   text-align: center;
 }
@@ -71,16 +67,16 @@ button:disabled {
 
 <form id="form">
 
-<label for="nom">Nom</label>
+<label>Nom</label>
 <input type="text" id="nom" required>
 
-<label for="prenom">Prénom</label>
+<label>Prénom</label>
 <input type="text" id="prenom" required>
 
-<label for="site">Site</label>
+<label>Site</label>
 <input type="text" id="site" required>
 
-<label for="type">Type de pointage</label>
+<label>Type de pointage</label>
 <select id="type" required>
   <option value="">Choisir</option>
   <option value="Heure de début de prestation">
@@ -91,7 +87,7 @@ button:disabled {
   </option>
 </select>
 
-<div id="gps">Recherche du GPS...</div>
+<div id="gps">📍 Recherche du GPS...</div>
 
 <button type="submit" id="bouton">
 ENREGISTRER LE POINTAGE
@@ -101,7 +97,6 @@ ENREGISTRER LE POINTAGE
 <div id="attente"></div>
 
 </form>
-
 </div>
 
 <script>
@@ -124,48 +119,61 @@ let gps = {
   precision: ""
 };
 
+
+/* GPS AVANT DE REMPLIR */
+
 function obtenirGPS() {
 
-  if (!navigator.geolocation) {
+  return new Promise(function(resolve) {
 
-    document.getElementById("gps").textContent =
-      "GPS non disponible";
-
-    return;
-  }
-
-  navigator.geolocation.getCurrentPosition(
-
-    function(position) {
-
-      gps.latitude =
-        position.coords.latitude;
-
-      gps.longitude =
-        position.coords.longitude;
-
-      gps.precision =
-        position.coords.accuracy;
+    if (!navigator.geolocation) {
 
       document.getElementById("gps").textContent =
-        "GPS activé ✔";
+        "📍 GPS non disponible";
 
-    },
-
-    function() {
-
-      document.getElementById("gps").textContent =
-        "GPS non autorisé";
-
-    },
-
-    {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 0
+      resolve(false);
+      return;
     }
 
-  );
+    document.getElementById("gps").textContent =
+      "📍 Recherche de votre position...";
+
+    navigator.geolocation.getCurrentPosition(
+
+      function(position) {
+
+        gps.latitude =
+          position.coords.latitude;
+
+        gps.longitude =
+          position.coords.longitude;
+
+        gps.precision =
+          position.coords.accuracy;
+
+        document.getElementById("gps").textContent =
+          "📍 GPS activé ✔";
+
+        resolve(true);
+      },
+
+      function() {
+
+        document.getElementById("gps").textContent =
+          "📍 GPS non autorisé";
+
+        resolve(false);
+      },
+
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 0
+      }
+
+    );
+
+  });
 }
 
 
@@ -210,6 +218,7 @@ function afficherAttente() {
     element.textContent = "";
 
   }
+
 }
 
 
@@ -284,7 +293,7 @@ async function synchroniser() {
 
 
 /* =========================
-   FORMULAIRE
+   ENREGISTREMENT DU POINTAGE
 ========================= */
 
 document
@@ -301,10 +310,40 @@ document
 
   bouton.disabled = true;
 
-  message.textContent = "";
+  message.textContent =
+    "📍 Vérification du GPS...";
 
 
-  /* Date et heure automatiques */
+  /* =========================
+     GPS APRÈS REMPLISSAGE
+     ET JUSTE AVANT POINTAGE
+  ========================= */
+
+  const gpsOK =
+    await obtenirGPS();
+
+
+  /*
+     On bloque l'enregistrement
+     si le GPS n'est pas disponible.
+  */
+
+  if (!gpsOK) {
+
+    message.textContent =
+      "❌ GPS obligatoire. Autorisez la localisation puis réessayez.";
+
+    message.style.color = "red";
+
+    bouton.disabled = false;
+
+    return;
+  }
+
+
+  /* =========================
+     DATE ET HEURE AUTOMATIQUES
+  ========================= */
 
   const maintenant =
     new Date();
@@ -343,7 +382,10 @@ document
   };
 
 
-  /* Sauvegarde locale immédiate */
+  /* =========================
+     SAUVEGARDE LOCALE
+     AVANT TOUT ENVOI
+  ========================= */
 
   let pointages =
     chargerPointages();
@@ -353,19 +395,26 @@ document
   sauvegarderPointages(pointages);
 
 
-  /* Envoi si Internet disponible */
+  /* =========================
+     ENVOI SI INTERNET
+  ========================= */
 
   if (navigator.onLine) {
+
+    message.textContent =
+      "Envoi du pointage...";
+
+    message.style.color = "black";
 
     await synchroniser();
 
     message.textContent =
-      "Pointage enregistré et envoyé ✔";
+      "✅ Pointage enregistré et envoyé";
 
   } else {
 
     message.textContent =
-      "Hors connexion : pointage sauvegardé ✔";
+      "📵 Hors connexion : pointage sauvegardé";
 
   }
 
@@ -402,6 +451,8 @@ window.addEventListener(
    DÉMARRAGE
 ========================= */
 
+/* GPS immédiatement à l'ouverture */
+
 obtenirGPS();
 
 afficherAttente();
@@ -410,7 +461,7 @@ synchroniser();
 
 
 /* =========================
-   MODE HORS CONNEXION
+   SERVICE WORKER
 ========================= */
 
 if ("serviceWorker" in navigator) {
