@@ -1,32 +1,24 @@
 ```html
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pointage salarié</title>
 
 <style>
-
 body {
   font-family: Arial, sans-serif;
   background: #f2f2f2;
-  margin: 0;
   padding: 20px;
 }
 
-.container {
-  max-width: 500px;
+form {
+  max-width: 450px;
   margin: auto;
   background: white;
   padding: 25px;
   border-radius: 12px;
-  box-shadow: 0 2px 10px #ccc;
 }
 
 h1 {
@@ -39,13 +31,11 @@ label {
   font-weight: bold;
 }
 
-input,
-select,
-button {
+input, select, button {
   width: 100%;
   box-sizing: border-box;
-  padding: 13px;
-  margin-top: 6px;
+  padding: 12px;
+  margin-top: 5px;
   font-size: 16px;
 }
 
@@ -53,290 +43,151 @@ button {
   margin-top: 25px;
   background: #1a73e8;
   color: white;
-  border: none;
+  border: 0;
   border-radius: 6px;
 }
 
-button:disabled {
-  background: #999;
-}
-
-#gps {
+#gps, #message {
   margin-top: 15px;
   text-align: center;
 }
-
-#message {
-  margin-top: 20px;
-  text-align: center;
-  font-weight: bold;
-}
-
 </style>
-
 </head>
 
 <body>
 
-<div class="container">
+<form id="form">
 
 <h1>Pointage salarié</h1>
 
-<form id="formPointage">
-
 <label>Nom</label>
-
-<input
-  type="text"
-  id="nom"
-  required
->
-
+<input id="nom" required>
 
 <label>Prénom</label>
-
-<input
-  type="text"
-  id="prenom"
-  required
->
-
+<input id="prenom" required>
 
 <label>Site</label>
-
-<input
-  type="text"
-  id="site"
-  required
->
-
+<input id="site" required>
 
 <label>Type de pointage</label>
-
 <select id="type" required>
-
-<option value="">
-Sélectionner
-</option>
-
-<option value="Arrivée">
-Arrivée
-</option>
-
-<option value="Départ">
-Départ
-</option>
-
-<option value="Pause début">
-Pause début
-</option>
-
-<option value="Pause fin">
-Pause fin
-</option>
-
+  <option value="">Choisir</option>
+  <option value="Arrivée">Arrivée</option>
+  <option value="Départ">Départ</option>
+  <option value="Pause début">Pause début</option>
+  <option value="Pause fin">Pause fin</option>
 </select>
 
+<div id="gps">Recherche GPS...</div>
 
-<div id="gps">
-Recherche de la position GPS...
-</div>
-
-
-<button
-  type="submit"
-  id="bouton">
-ENREGISTRER LE POINTAGE
-</button>
-
+<button type="submit">ENREGISTRER</button>
 
 <div id="message"></div>
 
 </form>
-
-</div>
-
 
 <script>
 
 const SERVEUR =
 "https://script.google.com/macros/s/AKfycbwq6-57RFAb7Pt9BOL4wIJapZ4mPqfsEXy-yIx1WhkykXrWPbNo0gxoIm4Kj9upf0dj/exec";
 
+let latitude = "";
+let longitude = "";
+let precision = "";
 
-let gps = {
-  latitude: "",
-  longitude: "",
-  precision: ""
-};
+navigator.geolocation.getCurrentPosition(
 
+  function(position) {
 
-function obtenirGPS() {
+    latitude = position.coords.latitude;
+    longitude = position.coords.longitude;
+    precision = position.coords.accuracy;
 
-  const affichage =
-    document.getElementById("gps");
+    document.getElementById("gps").textContent =
+      "GPS activé ✔";
 
-  if (!navigator.geolocation) {
+  },
 
-    affichage.textContent =
+  function() {
+
+    document.getElementById("gps").textContent =
       "GPS non disponible";
 
-    return;
-  }
+  },
 
-
-  navigator.geolocation.getCurrentPosition(
-
-    function(position) {
-
-      gps.latitude =
-        position.coords.latitude;
-
-      gps.longitude =
-        position.coords.longitude;
-
-      gps.precision =
-        position.coords.accuracy;
-
-      affichage.textContent =
-        "GPS OK - précision : " +
-        Math.round(position.coords.accuracy) +
-        " m";
-
-    },
-
-    function() {
-
-      affichage.textContent =
-        "GPS non autorisé";
-
-    },
-
-    {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 0
-    }
-
-  );
-
-}
-
-
-document
-.getElementById("formPointage")
-.addEventListener(
-  "submit",
-  async function(e) {
-
-    e.preventDefault();
-
-
-    const bouton =
-      document.getElementById("bouton");
-
-    const message =
-      document.getElementById("message");
-
-
-    bouton.disabled = true;
-
-    message.textContent =
-      "Enregistrement en cours...";
-
-
-    const donnees = {
-
-      dateHeure:
-        new Date().toISOString(),
-
-      nom:
-        document.getElementById("nom")
-        .value
-        .trim(),
-
-      prenom:
-        document.getElementById("prenom")
-        .value
-        .trim(),
-
-      site:
-        document.getElementById("site")
-        .value
-        .trim(),
-
-      type:
-        document.getElementById("type")
-        .value,
-
-      latitude:
-        gps.latitude,
-
-      longitude:
-        gps.longitude,
-
-      precision:
-        gps.precision
-
-    };
-
-
-    try {
-
-      await fetch(
-        SERVEUR,
-        {
-          method: "POST",
-
-          mode: "no-cors",
-
-          headers: {
-            "Content-Type":
-              "text/plain;charset=utf-8"
-          },
-
-          body:
-            JSON.stringify(donnees)
-        }
-      );
-
-
-      message.textContent =
-        "Pointage enregistré ✔";
-
-      message.style.color =
-        "green";
-
-
-      document
-        .getElementById("formPointage")
-        .reset();
-
-
-      obtenirGPS();
-
-
-    } catch (erreur) {
-
-      message.textContent =
-        "Erreur d'enregistrement";
-
-      message.style.color =
-        "red";
-
-    }
-
-
-    bouton.disabled = false;
-
+  {
+    enableHighAccuracy: true,
+    timeout: 15000,
+    maximumAge: 0
   }
 );
 
 
-obtenirGPS();
+document.getElementById("form")
+.addEventListener("submit", async function(e) {
+
+  e.preventDefault();
+
+  const message =
+    document.getElementById("message");
+
+  const donnees = {
+
+    dateHeure: new Date().toISOString(),
+
+    nom:
+      document.getElementById("nom").value,
+
+    prenom:
+      document.getElementById("prenom").value,
+
+    site:
+      document.getElementById("site").value,
+
+    type:
+      document.getElementById("type").value,
+
+    latitude: latitude,
+
+    longitude: longitude,
+
+    precision: precision
+  };
+
+  message.textContent =
+    "Envoi en cours...";
+
+  try {
+
+    await fetch(SERVEUR, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type":
+          "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(donnees)
+    });
+
+    message.textContent =
+      "Pointage enregistré ✔";
+
+    message.style.color = "green";
+
+    document.getElementById("form").reset();
+
+  } catch (error) {
+
+    message.textContent =
+      "Erreur d'envoi";
+
+    message.style.color = "red";
+  }
+
+});
 
 </script>
 
 </body>
-
 </html>
 ```
