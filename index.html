@@ -31,7 +31,9 @@ label {
   font-weight: bold;
 }
 
-input, select, button {
+input,
+select,
+button {
   width: 100%;
   box-sizing: border-box;
   padding: 13px;
@@ -52,7 +54,9 @@ button:disabled {
   opacity: 0.6;
 }
 
-#gps, #message, #attente {
+#gps,
+#message,
+#attente {
   margin-top: 15px;
   text-align: center;
 }
@@ -67,16 +71,16 @@ button:disabled {
 
 <form id="form">
 
-<label>Nom</label>
+<label for="nom">Nom</label>
 <input type="text" id="nom" required>
 
-<label>Prénom</label>
+<label for="prenom">Prénom</label>
 <input type="text" id="prenom" required>
 
-<label>Site</label>
+<label for="site">Site</label>
 <input type="text" id="site" required>
 
-<label>Type de pointage</label>
+<label for="type">Type de pointage</label>
 <select id="type" required>
   <option value="">Choisir</option>
   <option value="Heure de début de prestation">
@@ -97,21 +101,22 @@ ENREGISTRER LE POINTAGE
 <div id="attente"></div>
 
 </form>
+
 </div>
 
 <script>
 
-/* =========================
+/* ==================================================
    GOOGLE APPS SCRIPT
-========================= */
+================================================== */
 
 const SERVEUR =
 "https://script.google.com/macros/s/AKfycbwq6-57RFAb7Pt9BOL4wIJapZ4mPqfsEXy-yIx1WhkykXrWPbNo0gxoIm4Kj9upf0dj/exec";
 
 
-/* =========================
+/* ==================================================
    GPS
-========================= */
+================================================== */
 
 let gps = {
   latitude: "",
@@ -119,8 +124,6 @@ let gps = {
   precision: ""
 };
 
-
-/* GPS AVANT DE REMPLIR */
 
 function obtenirGPS() {
 
@@ -174,12 +177,13 @@ function obtenirGPS() {
     );
 
   });
+
 }
 
 
-/* =========================
+/* ==================================================
    STOCKAGE HORS CONNEXION
-========================= */
+================================================== */
 
 function chargerPointages() {
 
@@ -222,9 +226,9 @@ function afficherAttente() {
 }
 
 
-/* =========================
-   ENVOI GOOGLE SHEETS
-========================= */
+/* ==================================================
+   ENVOI VERS GOOGLE SHEETS
+================================================== */
 
 async function envoyerPointage(pointage) {
 
@@ -246,11 +250,24 @@ async function envoyerPointage(pointage) {
 }
 
 
-/* =========================
-   SYNCHRONISATION
-========================= */
+/* ==================================================
+   PROTECTION CONTRE LES SYNCHRONISATIONS
+   SIMULTANÉES
+================================================== */
+
+let synchronisationEnCours = false;
+
 
 async function synchroniser() {
+
+  /* Une seule synchronisation à la fois */
+
+  if (synchronisationEnCours) {
+    return;
+  }
+
+
+  /* Pas d'Internet */
 
   if (!navigator.onLine) {
 
@@ -259,42 +276,62 @@ async function synchroniser() {
 
   }
 
-  let pointages =
-    chargerPointages();
 
-  if (pointages.length === 0) {
+  synchronisationEnCours = true;
 
-    afficherAttente();
-    return;
 
-  }
+  try {
 
-  let restants = [];
+    let pointages =
+      chargerPointages();
 
-  for (const pointage of pointages) {
 
-    try {
+    if (pointages.length === 0) {
 
-      await envoyerPointage(pointage);
-
-    } catch (erreur) {
-
-      restants.push(pointage);
+      afficherAttente();
+      return;
 
     }
 
+
+    let restants = [];
+
+
+    for (const pointage of pointages) {
+
+      try {
+
+        await envoyerPointage(pointage);
+
+      } catch (erreur) {
+
+        /* On garde le pointage
+           s'il n'a pas pu être envoyé */
+
+        restants.push(pointage);
+
+      }
+
+    }
+
+
+    sauvegarderPointages(restants);
+
+    afficherAttente();
+
+
+  } finally {
+
+    synchronisationEnCours = false;
+
   }
-
-  sauvegarderPointages(restants);
-
-  afficherAttente();
 
 }
 
 
-/* =========================
-   ENREGISTREMENT DU POINTAGE
-========================= */
+/* ==================================================
+   FORMULAIRE
+================================================== */
 
 document
 .getElementById("form")
@@ -302,52 +339,55 @@ document
 
   e.preventDefault();
 
+
   const bouton =
     document.getElementById("bouton");
 
   const message =
     document.getElementById("message");
 
+
   bouton.disabled = true;
+
+  message.style.color = "black";
 
   message.textContent =
     "📍 Vérification du GPS...";
 
 
-  /* =========================
-     GPS APRÈS REMPLISSAGE
-     ET JUSTE AVANT POINTAGE
-  ========================= */
+  /* ==================================================
+     NOUVELLE LOCALISATION GPS AU MOMENT DU POINTAGE
+  ================================================== */
 
   const gpsOK =
     await obtenirGPS();
 
 
-  /*
-     On bloque l'enregistrement
-     si le GPS n'est pas disponible.
-  */
-
   if (!gpsOK) {
 
     message.textContent =
-      "❌ GPS obligatoire. Autorisez la localisation puis réessayez.";
+      "❌ GPS obligatoire. Autorisez la localisation.";
 
     message.style.color = "red";
 
     bouton.disabled = false;
 
     return;
+
   }
 
 
-  /* =========================
+  /* ==================================================
      DATE ET HEURE AUTOMATIQUES
-  ========================= */
+  ================================================== */
 
   const maintenant =
     new Date();
 
+
+  /* ==================================================
+     CRÉATION DU POINTAGE
+  ================================================== */
 
   const pointage = {
 
@@ -382,10 +422,9 @@ document
   };
 
 
-  /* =========================
-     SAUVEGARDE LOCALE
-     AVANT TOUT ENVOI
-  ========================= */
+  /* ==================================================
+     SAUVEGARDE LOCALE AVANT ENVOI
+  ================================================== */
 
   let pointages =
     chargerPointages();
@@ -395,21 +434,19 @@ document
   sauvegarderPointages(pointages);
 
 
-  /* =========================
+  /* ==================================================
      ENVOI SI INTERNET
-  ========================= */
+  ================================================== */
 
   if (navigator.onLine) {
 
     message.textContent =
-      "Envoi du pointage...";
-
-    message.style.color = "black";
+      "📤 Envoi du pointage...";
 
     await synchroniser();
 
     message.textContent =
-      "✅ Pointage enregistré et envoyé";
+      "✅ Pointage enregistré";
 
   } else {
 
@@ -418,8 +455,11 @@ document
 
   }
 
+
   message.style.color = "green";
 
+
+  /* Nettoyage du formulaire */
 
   document
     .getElementById("form")
@@ -428,14 +468,15 @@ document
 
   afficherAttente();
 
+
   bouton.disabled = false;
 
 });
 
 
-/* =========================
+/* ==================================================
    INTERNET RETROUVÉ
-========================= */
+================================================== */
 
 window.addEventListener(
   "online",
@@ -447,22 +488,26 @@ window.addEventListener(
 );
 
 
-/* =========================
-   DÉMARRAGE
-========================= */
+/* ==================================================
+   AU DÉMARRAGE
+================================================== */
 
-/* GPS immédiatement à l'ouverture */
+/* GPS immédiatement */
 
 obtenirGPS();
 
+/* Pointages en attente */
+
 afficherAttente();
+
+/* Synchronisation */
 
 synchroniser();
 
 
-/* =========================
+/* ==================================================
    SERVICE WORKER
-========================= */
+================================================== */
 
 if ("serviceWorker" in navigator) {
 
