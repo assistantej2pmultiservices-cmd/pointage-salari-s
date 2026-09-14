@@ -1,72 +1,127 @@
-const CACHE_NAME = "pointage-v20";
+const CACHE_NAME = "pointage-v30";
 
 const FILES = [
   "./",
   "./index.html"
 ];
 
-self.addEventListener("install", function(event) {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(function(cache) {
-      return cache.addAll(FILES);
-    })
-  );
 
-  self.skipWaiting();
-});
+self.addEventListener(
+  "install",
+  function(event) {
 
-self.addEventListener("activate", function(event) {
-  event.waitUntil(
-    caches.keys().then(function(keys) {
-      return Promise.all(
-        keys.map(function(key) {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
+    event.waitUntil(
+
+      caches
+        .open(CACHE_NAME)
+        .then(function(cache) {
+
+          return cache.addAll(FILES);
+
         })
-      );
-    })
-  );
 
-  self.clients.claim();
-});
+    );
 
-self.addEventListener("fetch", function(event) {
+    self.skipWaiting();
 
-  if (event.request.method !== "GET") {
-    return;
   }
+);
 
-  event.respondWith(
 
-    caches.match(event.request).then(function(cached) {
+self.addEventListener(
+  "activate",
+  function(event) {
 
-      if (cached) {
-        return cached;
-      }
+    event.waitUntil(
 
-      return fetch(event.request).then(function(response) {
+      caches.keys()
+        .then(function(keys) {
 
-        if (response && response.status === 200) {
+          return Promise.all(
 
-          const copie = response.clone();
+            keys.map(function(key) {
 
-          caches.open(CACHE_NAME).then(function(cache) {
-            cache.put(event.request, copie);
-          });
+              if (key !== CACHE_NAME) {
 
-        }
+                return caches.delete(key);
 
-        return response;
+              }
 
-      }).catch(function() {
+            })
 
-        return caches.match("./index.html");
+          );
 
-      });
+        })
 
-    })
+    );
 
-  );
+    self.clients.claim();
 
-});
+  }
+);
+
+
+self.addEventListener(
+  "fetch",
+  function(event) {
+
+    if (event.request.method !== "GET") {
+      return;
+    }
+
+
+    event.respondWith(
+
+      caches
+        .match(event.request)
+        .then(function(cachedResponse) {
+
+          if (cachedResponse) {
+
+            return cachedResponse;
+
+          }
+
+
+          return fetch(event.request)
+            .then(function(response) {
+
+              if (
+                response &&
+                response.status === 200
+              ) {
+
+                const copie =
+                  response.clone();
+
+
+                caches
+                  .open(CACHE_NAME)
+                  .then(function(cache) {
+
+                    cache.put(
+                      event.request,
+                      copie
+                    );
+
+                  });
+
+              }
+
+              return response;
+
+            })
+            .catch(function() {
+
+              return caches.match(
+                "./index.html"
+              );
+
+            });
+
+        })
+
+    );
+
+  }
+);
