@@ -69,7 +69,7 @@ input {
 
 .type-button {
   width: 100%;
-  padding: 18px 12px;
+  padding: 20px 10px;
   border: 4px solid transparent;
   border-radius: 10px;
   color: white;
@@ -86,30 +86,16 @@ input {
   background: #dc3545;
 }
 
+.type-button:active {
+  transform: scale(0.98);
+}
+
 .type-button.selected {
   border-color: #000;
-  box-shadow: 0 0 0 2px white inset;
-}
-
-#bouton {
-  width: 100%;
-  padding: 17px;
-  margin-top: 25px;
-  border: none;
-  border-radius: 9px;
-  background: #1976d2;
-  color: white;
-  font-size: 17px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-#bouton:disabled {
-  opacity: 0.6;
 }
 
 #message {
-  margin-top: 18px;
+  margin-top: 20px;
   text-align: center;
   font-weight: bold;
 }
@@ -165,18 +151,13 @@ TYPE DE POINTAGE
 
 </div>
 
-<input type="hidden" id="type">
-
-<button type="submit" id="bouton">
-  ENREGISTRER LE POINTAGE
-</button>
-
 <div id="message"></div>
 <div id="attente"></div>
 
 </form>
 
 </div>
+
 
 <script>
 
@@ -200,7 +181,7 @@ let gps = {
 
 
 /* ==================================================
-   SAUVEGARDE DU DERNIER GPS
+   SAUVEGARDER GPS
 ================================================== */
 
 function sauvegarderGPS() {
@@ -212,6 +193,10 @@ function sauvegarderGPS() {
 
 }
 
+
+/* ==================================================
+   CHARGER DERNIER GPS
+================================================== */
 
 function chargerDernierGPS() {
 
@@ -251,17 +236,9 @@ function obtenirGPS() {
 
   return new Promise(function(resolve) {
 
-    /*
-     * Si le GPS n'est pas disponible immédiatement,
-     * on utilise le dernier GPS connu.
-     */
-
     if (!navigator.geolocation) {
 
-      const ancien =
-        chargerDernierGPS();
-
-      if (ancien) {
+      if (chargerDernierGPS()) {
 
         document.getElementById("gps").textContent =
           "📍 Dernière position GPS conservée";
@@ -281,10 +258,6 @@ function obtenirGPS() {
     }
 
 
-    document.getElementById("gps").textContent =
-      "📍 Recherche de la position GPS...";
-
-
     navigator.geolocation.getCurrentPosition(
 
       function(position) {
@@ -298,10 +271,6 @@ function obtenirGPS() {
         gps.precision =
           position.coords.accuracy;
 
-
-        /*
-         * On sauvegarde le GPS localement.
-         */
 
         sauvegarderGPS();
 
@@ -317,16 +286,7 @@ function obtenirGPS() {
 
       function() {
 
-        /*
-         * GPS impossible à actualiser :
-         * on reprend le dernier GPS connu.
-         */
-
-        const ancien =
-          chargerDernierGPS();
-
-
-        if (ancien) {
+        if (chargerDernierGPS()) {
 
           document.getElementById("gps").textContent =
             "📍 Dernière position GPS conservée";
@@ -359,33 +319,7 @@ function obtenirGPS() {
 
 
 /* ==================================================
-   CHOIX DÉBUT / FIN
-================================================== */
-
-document
-.querySelectorAll(".type-button")
-.forEach(function(button) {
-
-  button.addEventListener("click", function() {
-
-    document.getElementById("type").value =
-      button.dataset.type;
-
-    document
-      .querySelectorAll(".type-button")
-      .forEach(function(b) {
-        b.classList.remove("selected");
-      });
-
-    button.classList.add("selected");
-
-  });
-
-});
-
-
-/* ==================================================
-   STOCKAGE DES POINTAGES
+   STOCKAGE LOCAL
 ================================================== */
 
 function chargerPointages() {
@@ -505,186 +439,191 @@ async function synchroniser() {
 
 
 /* ==================================================
-   ENREGISTREMENT DU FORMULAIRE
+   POINTAGE AUTOMATIQUE
+   CLIQUER = ENREGISTRER
 ================================================== */
 
 document
-.getElementById("form")
-.addEventListener("submit", async function(e) {
-
-  e.preventDefault();
-
-  const bouton =
-    document.getElementById("bouton");
-
-  const message =
-    document.getElementById("message");
-
-  const type =
-    document.getElementById("type").value;
+.querySelectorAll(".type-button")
+.forEach(function(button) {
 
 
-  if (!type) {
-
-    message.textContent =
-      "❌ Sélectionnez DÉBUT ou FIN.";
-
-    message.style.color = "red";
-
-    return;
-  }
+  button.addEventListener("click", async function() {
 
 
-  bouton.disabled = true;
-
-  message.textContent =
-    "📍 Vérification du GPS...";
-
-  message.style.color = "black";
+    const message =
+      document.getElementById("message");
 
 
-  /*
-   * On essaie d'obtenir un nouveau GPS.
-   * Si Internet est coupé mais que le GPS
-   * est déjà enregistré, le dernier GPS
-   * est conservé.
-   */
+    /* Empêche les doubles clics */
 
-  const gpsOK =
-    await obtenirGPS();
+    if (button.disabled) {
+      return;
+    }
+
+    button.disabled = true;
 
 
-  if (!gpsOK) {
+    /* Type choisi */
 
-    message.textContent =
-      "❌ Aucune position GPS disponible.";
-
-    message.style.color = "red";
-
-    bouton.disabled = false;
-
-    return;
-  }
+    const type =
+      button.dataset.type;
 
 
-  /* Date et heure automatiques */
+    /* Vérification des champs */
 
-  const maintenant =
-    new Date();
+    const nom =
+      document.getElementById("nom").value.trim();
 
+    const prenom =
+      document.getElementById("prenom").value.trim();
 
-  /* Création du pointage */
-
-  const pointage = {
-
-    dateHeure:
-      maintenant.toISOString(),
-
-    nom:
-      document
-      .getElementById("nom")
-      .value
-      .trim(),
-
-    prenom:
-      document
-      .getElementById("prenom")
-      .value
-      .trim(),
-
-    site:
-      document
-      .getElementById("site")
-      .value
-      .trim(),
-
-    type:
-      type,
-
-    latitude:
-      gps.latitude,
-
-    longitude:
-      gps.longitude,
-
-    precision:
-      gps.precision
-
-  };
+    const site =
+      document.getElementById("site").value.trim();
 
 
-  /*
-   * SAUVEGARDE AVANT TOUT ENVOI
-   */
+    if (!nom || !prenom || !site) {
 
-  let pointages =
-    chargerPointages();
+      message.textContent =
+        "❌ Remplissez le nom, prénom et site.";
 
-  pointages.push(pointage);
+      message.style.color = "red";
 
-  sauvegarderPointages(pointages);
+      button.disabled = false;
+
+      return;
+    }
 
 
-  /* ==========================================
-     AVEC INTERNET
-  ========================================== */
-
-  if (navigator.onLine) {
+    /* GPS */
 
     message.textContent =
-      "📤 Envoi du pointage...";
+      "📍 Récupération du GPS...";
 
-    await synchroniser();
-
-    message.textContent =
-      "✅ POINTAGE ENREGISTRÉ";
+    message.style.color = "black";
 
 
-  } else {
+    const gpsOK =
+      await obtenirGPS();
 
 
-    /* ==========================================
-       SANS INTERNET
-    ========================================== */
+    if (!gpsOK) {
 
-    message.textContent =
-      "📵 HORS CONNEXION : POINTAGE ET GPS SAUVEGARDÉS";
+      message.textContent =
+        "❌ Impossible d'obtenir une position GPS.";
 
-  }
+      message.style.color = "red";
 
+      button.disabled = false;
 
-  message.style.color = "green";
-
-
-  /* Nettoyage */
-
-  document
-    .getElementById("nom")
-    .value = "";
-
-  document
-    .getElementById("prenom")
-    .value = "";
-
-  document
-    .getElementById("site")
-    .value = "";
-
-  document
-    .getElementById("type")
-    .value = "";
+      return;
+    }
 
 
-  document
-    .querySelectorAll(".type-button")
-    .forEach(function(b) {
-      b.classList.remove("selected");
-    });
+    /* Date et heure automatiques */
+
+    const maintenant =
+      new Date();
 
 
-  afficherAttente();
+    /* Création du pointage */
 
-  bouton.disabled = false;
+    const pointage = {
+
+      id:
+        crypto.randomUUID
+        ? crypto.randomUUID()
+        : Date.now().toString() +
+          Math.random().toString(16).slice(2),
+
+      dateHeure:
+        maintenant.toISOString(),
+
+      nom:
+        nom,
+
+      prenom:
+        prenom,
+
+      type:
+        type,
+
+      site:
+        site,
+
+      latitude:
+        gps.latitude,
+
+      longitude:
+        gps.longitude,
+
+      precision:
+        gps.precision
+
+    };
+
+
+    /* ==================================================
+       SAUVEGARDE IMMÉDIATE SUR LE TÉLÉPHONE
+    ================================================== */
+
+    let pointages =
+      chargerPointages();
+
+    pointages.push(pointage);
+
+    sauvegarderPointages(pointages);
+
+
+    /* ==================================================
+       ENVOI AUTOMATIQUE
+    ================================================== */
+
+    if (navigator.onLine) {
+
+      message.textContent =
+        "📤 Enregistrement automatique...";
+
+
+      await synchroniser();
+
+
+      message.textContent =
+        "✅ POINTAGE ENREGISTRÉ AUTOMATIQUEMENT";
+
+
+    } else {
+
+      message.textContent =
+        "📵 HORS CONNEXION : POINTAGE SAUVEGARDÉ";
+
+
+    }
+
+
+    message.style.color = "green";
+
+
+    /* Bouton choisi */
+
+    button.classList.add("selected");
+
+
+    afficherAttente();
+
+
+    /* Réactivation après 2 secondes */
+
+    setTimeout(function() {
+
+      button.classList.remove("selected");
+
+      button.disabled = false;
+
+    }, 2000);
+
+
+  });
 
 });
 
@@ -707,10 +646,6 @@ window.addEventListener(
    DÉMARRAGE
 ================================================== */
 
-/*
- * Charge d'abord le dernier GPS connu.
- */
-
 if (chargerDernierGPS()) {
 
   document.getElementById("gps").textContent =
@@ -718,10 +653,6 @@ if (chargerDernierGPS()) {
 
 }
 
-
-/*
- * Puis tente d'obtenir une nouvelle position.
- */
 
 obtenirGPS();
 
