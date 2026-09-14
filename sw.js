@@ -1,4 +1,4 @@
-const CACHE_NAME = "pointage-v3";
+const CACHE_NAME = "pointage-v20";
 
 const FILES = [
   "./",
@@ -6,51 +6,30 @@ const FILES = [
 ];
 
 self.addEventListener("install", function(event) {
-
   event.waitUntil(
-
-    caches.open(CACHE_NAME)
-      .then(function(cache) {
-
-        return cache.addAll(FILES);
-
-      })
-
+    caches.open(CACHE_NAME).then(function(cache) {
+      return cache.addAll(FILES);
+    })
   );
 
   self.skipWaiting();
-
 });
 
-
 self.addEventListener("activate", function(event) {
-
   event.waitUntil(
-
     caches.keys().then(function(keys) {
-
       return Promise.all(
-
         keys.map(function(key) {
-
           if (key !== CACHE_NAME) {
-
             return caches.delete(key);
-
           }
-
         })
-
       );
-
     })
-
   );
 
   self.clients.claim();
-
 });
-
 
 self.addEventListener("fetch", function(event) {
 
@@ -60,48 +39,33 @@ self.addEventListener("fetch", function(event) {
 
   event.respondWith(
 
-    caches.match(event.request)
-      .then(function(cachedResponse) {
+    caches.match(event.request).then(function(cached) {
 
-        if (cachedResponse) {
+      if (cached) {
+        return cached;
+      }
 
-          return cachedResponse;
+      return fetch(event.request).then(function(response) {
+
+        if (response && response.status === 200) {
+
+          const copie = response.clone();
+
+          caches.open(CACHE_NAME).then(function(cache) {
+            cache.put(event.request, copie);
+          });
 
         }
 
-        return fetch(event.request)
-          .then(function(response) {
+        return response;
 
-            if (
-              response &&
-              response.status === 200
-            ) {
+      }).catch(function() {
 
-              const copie =
-                response.clone();
+        return caches.match("./index.html");
 
-              caches.open(CACHE_NAME)
-                .then(function(cache) {
+      });
 
-                  cache.put(
-                    event.request,
-                    copie
-                  );
-
-                });
-
-            }
-
-            return response;
-
-          })
-          .catch(function() {
-
-            return caches.match("./index.html");
-
-          });
-
-      })
+    })
 
   );
 
