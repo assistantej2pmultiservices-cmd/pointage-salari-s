@@ -1,11 +1,19 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
+
 <title>Pointage</title>
 
 <style>
+
 * {
   box-sizing: border-box;
 }
@@ -44,8 +52,6 @@ input {
   border-radius: 7px;
   font-size: 16px;
 }
-
-/* GPS */
 
 #gps {
   margin-bottom: 20px;
@@ -98,8 +104,6 @@ input {
   opacity: 0.6;
 }
 
-/* MESSAGES */
-
 #message {
   margin-top: 20px;
   text-align: center;
@@ -111,7 +115,9 @@ input {
   text-align: center;
   font-size: 14px;
 }
+
 </style>
+
 </head>
 
 <body>
@@ -127,49 +133,75 @@ input {
 <form id="form">
 
 <label for="nom">NOM</label>
-<input type="text" id="nom" required>
+
+<input
+  type="text"
+  id="nom"
+  autocomplete="off"
+  required
+>
+
 
 <label for="prenom">PRÉNOM</label>
-<input type="text" id="prenom" required>
+
+<input
+  type="text"
+  id="prenom"
+  autocomplete="off"
+  required
+>
+
 
 <label for="site">SITE D'INTERVENTION</label>
-<input type="text" id="site" required>
+
+<input
+  type="text"
+  id="site"
+  autocomplete="off"
+  required
+>
+
 
 <div class="type-title">
   TYPE DE POINTAGE
 </div>
 
-<!-- AUCUNE LISTE DÉROULANTE -->
 
 <div class="type-buttons">
 
-  <button
-    type="button"
-    class="type-button debut"
-    data-type="Heure de début de prestation">
-    🟢 HEURE DE DÉBUT DE PRESTATION
-  </button>
+<button
+  type="button"
+  class="type-button debut"
+  data-type="Heure de début de prestation"
+>
+  🟢 HEURE DE DÉBUT DE PRESTATION
+</button>
 
-  <button
-    type="button"
-    class="type-button fin"
-    data-type="Heure de fin de prestation">
-    🔴 HEURE DE FIN DE PRESTATION
-  </button>
+
+<button
+  type="button"
+  class="type-button fin"
+  data-type="Heure de fin de prestation"
+>
+  🔴 HEURE DE FIN DE PRESTATION
+</button>
 
 </div>
 
+
 <div id="message"></div>
+
 <div id="attente"></div>
 
 </form>
 
 </div>
 
+
 <script>
 
 /* =====================================================
-   GOOGLE APPS SCRIPT
+   SERVEUR GOOGLE
 ===================================================== */
 
 const SERVEUR =
@@ -188,7 +220,7 @@ let gps = {
 
 
 /* =====================================================
-   SAUVEGARDE DU GPS
+   SAUVEGARDER GPS
 ===================================================== */
 
 function sauvegarderGPS() {
@@ -202,19 +234,19 @@ function sauvegarderGPS() {
 
 
 /* =====================================================
-   CHARGEMENT DU DERNIER GPS
+   CHARGER GPS
 ===================================================== */
 
 function chargerDernierGPS() {
 
-  const ancienGPS =
-    localStorage.getItem("dernierGPS");
-
-  if (!ancienGPS) {
-    return false;
-  }
-
   try {
+
+    const ancienGPS =
+      localStorage.getItem("dernierGPS");
+
+    if (!ancienGPS) {
+      return false;
+    }
 
     const position =
       JSON.parse(ancienGPS);
@@ -236,7 +268,7 @@ function chargerDernierGPS() {
 
 
 /* =====================================================
-   OBTENIR LE GPS
+   OBTENIR GPS
 ===================================================== */
 
 function obtenirGPS() {
@@ -258,7 +290,6 @@ function obtenirGPS() {
           "❌ GPS non disponible";
 
         resolve(false);
-
       }
 
       return;
@@ -278,25 +309,16 @@ function obtenirGPS() {
         gps.precision =
           position.coords.accuracy;
 
-
         sauvegarderGPS();
-
 
         document.getElementById("gps").textContent =
           "✅ Position GPS enregistrée";
 
-
         resolve(true);
-
       },
 
 
       function() {
-
-        /*
-         * Si le GPS ne peut pas être actualisé,
-         * on utilise le dernier GPS connu.
-         */
 
         if (chargerDernierGPS()) {
 
@@ -311,7 +333,6 @@ function obtenirGPS() {
             "❌ Aucune position GPS disponible";
 
           resolve(false);
-
         }
 
       },
@@ -319,8 +340,8 @@ function obtenirGPS() {
 
       {
         enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 600000
+        timeout: 15000,
+        maximumAge: 300000
       }
 
     );
@@ -345,7 +366,6 @@ function chargerPointages() {
   } catch (erreur) {
 
     return [];
-
   }
 
 }
@@ -375,7 +395,7 @@ function afficherAttente() {
 
 
 /* =====================================================
-   ENVOI VERS GOOGLE SHEETS
+   ENVOI GOOGLE SHEETS
 ===================================================== */
 
 async function envoyerPointage(pointage) {
@@ -474,8 +494,8 @@ async function synchroniser() {
 
 
 /* =====================================================
-   CLIC SUR DÉBUT OU FIN
-   = ENREGISTREMENT AUTOMATIQUE
+   BOUTONS DÉBUT / FIN
+   AUCUNE LISTE DÉROULANTE
 ===================================================== */
 
 document
@@ -488,21 +508,10 @@ document
     async function() {
 
 
-      const message =
-        document.getElementById("message");
-
-
-      /* Empêche les doubles clics */
-
       if (button.disabled) {
         return;
       }
 
-
-      button.disabled = true;
-
-
-      /* Récupération des champs */
 
       const nom =
         document
@@ -529,7 +538,13 @@ document
         button.dataset.type;
 
 
-      /* Vérification */
+      const message =
+        document.getElementById("message");
+
+
+      /* =========================
+         VÉRIFICATION
+      ========================= */
 
       if (!nom || !prenom || !site) {
 
@@ -538,16 +553,19 @@ document
 
         message.style.color = "red";
 
-        button.disabled = false;
-
         return;
       }
 
 
-      /* GPS */
+      button.disabled = true;
+
+
+      /* =========================
+         GPS AVANT ENREGISTREMENT
+      ========================= */
 
       message.textContent =
-        "📍 Récupération du GPS...";
+        "📍 Vérification de la position GPS...";
 
       message.style.color = "black";
 
@@ -559,7 +577,7 @@ document
       if (!gpsOK) {
 
         message.textContent =
-          "❌ Aucune position GPS disponible.";
+          "❌ Position GPS impossible.";
 
         message.style.color = "red";
 
@@ -569,18 +587,25 @@ document
       }
 
 
-      /* Date et heure automatiques */
-
-      const maintenant =
-        new Date();
-
-
-      /* Création du pointage */
+      /* =========================
+         POINTAGE
+      ========================= */
 
       const pointage = {
 
+        id:
+          Date.now().toString() +
+          "-" +
+          Math.random()
+            .toString(36)
+            .substring(2, 10),
+
+        /* IMPORTANT :
+           timestamp numérique
+           pour avoir la bonne date/heure */
+
         dateHeure:
-          maintenant.toISOString(),
+          Date.now(),
 
         nom:
           nom,
@@ -606,9 +631,9 @@ document
       };
 
 
-      /* =================================================
-         ENREGISTREMENT LOCAL IMMÉDIAT
-      ================================================= */
+      /* =========================
+         SAUVEGARDE LOCALE
+      ========================= */
 
       let pointages =
         chargerPointages();
@@ -622,9 +647,9 @@ document
       );
 
 
-      /* =================================================
-         INTERNET
-      ================================================= */
+      /* =========================
+         ENVOI AUTOMATIQUE
+      ========================= */
 
       if (navigator.onLine) {
 
@@ -638,17 +663,10 @@ document
         message.textContent =
           "✅ POINTAGE ENREGISTRÉ";
 
-
       } else {
-
-
-        /* =================================================
-           HORS CONNEXION
-        ================================================= */
 
         message.textContent =
           "📵 HORS CONNEXION : POINTAGE SAUVEGARDÉ";
-
 
       }
 
@@ -657,15 +675,17 @@ document
         "green";
 
 
-      /* Bouton sélectionné */
-
-      button.classList.add("selected");
+      button.classList.add(
+        "selected"
+      );
 
 
       afficherAttente();
 
 
-      /* Nettoyage des champs */
+      /* =========================
+         EFFACER LE FORMULAIRE
+      ========================= */
 
       document
         .getElementById("nom")
@@ -682,8 +702,6 @@ document
         .value = "";
 
 
-      /* Retire la sélection */
-
       setTimeout(function() {
 
         button.classList.remove(
@@ -693,7 +711,6 @@ document
         button.disabled = false;
 
       }, 1500);
-
 
     }
 
@@ -717,7 +734,7 @@ window.addEventListener(
 
 
 /* =====================================================
-   DÉMARRAGE
+   GPS AU DÉMARRAGE
 ===================================================== */
 
 if (chargerDernierGPS()) {
@@ -728,14 +745,11 @@ if (chargerDernierGPS()) {
 }
 
 
-/* Récupération GPS avant remplissage */
-
 obtenirGPS();
 
 
-/* Envoi des pointages en attente */
-
 afficherAttente();
+
 
 synchroniser();
 
