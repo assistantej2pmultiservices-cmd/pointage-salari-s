@@ -1,4 +1,4 @@
-const CACHE_NAME = "pointage-cache-v1";
+const CACHE_NAME = "pointage-v2";
 
 const FICHIERS = [
   "./",
@@ -6,132 +6,87 @@ const FICHIERS = [
   "./sw.js"
 ];
 
+self.addEventListener("install", event => {
 
-/* =========================================================
-   INSTALLATION
-========================================================= */
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(FICHIERS))
+  );
 
-self.addEventListener(
-  "install",
-  function(event) {
+  self.skipWaiting();
+});
 
-    event.waitUntil(
 
-      caches
-        .open(CACHE_NAME)
-        .then(function(cache) {
+self.addEventListener("activate", event => {
 
-          return cache.addAll(FICHIERS);
+  event.waitUntil(
 
-        })
-    );
+    caches.keys()
+      .then(noms => {
 
-    self.skipWaiting();
+        return Promise.all(
+
+          noms.map(nom => {
+
+            if (nom !== CACHE_NAME) {
+              return caches.delete(nom);
+            }
+
+          })
+
+        );
+      })
+  );
+
+  self.clients.claim();
+});
+
+
+self.addEventListener("fetch", event => {
+
+  const url =
+    new URL(event.request.url);
+
+  if (
+    url.origin !== self.location.origin
+  ) {
+    return;
   }
-);
 
+  event.respondWith(
 
-/* =========================================================
-   ACTIVATION
-========================================================= */
+    caches.match(event.request)
+      .then(reponse => {
 
-self.addEventListener(
-  "activate",
-  function(event) {
+        if (reponse) {
+          return reponse;
+        }
 
-    event.waitUntil(
+        return fetch(event.request)
+          .then(reponseReseau => {
 
-      caches
-        .keys()
-        .then(function(noms) {
+            if (
+              reponseReseau &&
+              reponseReseau.status === 200
+            ) {
 
-          return Promise.all(
+              const copie =
+                reponseReseau.clone();
 
-            noms.map(function(nom) {
+              caches.open(CACHE_NAME)
+                .then(cache => {
 
-              if (
-                nom !== CACHE_NAME
-              ) {
+                  cache.put(
+                    event.request,
+                    copie
+                  );
 
-                return caches.delete(nom);
-              }
+                });
+            }
 
-            })
+            return reponseReseau;
+          });
 
-          );
-
-        })
-    );
-
-    self.clients.claim();
-  }
-);
-
-
-/* =========================================================
-   REQUETES
-========================================================= */
-
-self.addEventListener(
-  "fetch",
-  function(event) {
-
-    /*
-      Pour l'application elle-même :
-      cache d'abord, puis réseau.
-
-      Pour les appels externes Google Apps Script,
-      on laisse le navigateur gérer directement.
-    */
-
-    const url =
-      new URL(event.request.url);
-
-    if (
-      url.origin !== self.location.origin
-    ) {
-
-      return;
-    }
-
-    event.respondWith(
-
-      caches
-        .match(event.request)
-        .then(function(reponseCache) {
-
-          if (reponseCache) {
-            return reponseCache;
-          }
-
-          return fetch(event.request)
-            .then(function(reponse) {
-
-              if (
-                reponse &&
-                reponse.status === 200
-              ) {
-
-                const copie =
-                  reponse.clone();
-
-                caches
-                  .open(CACHE_NAME)
-                  .then(function(cache) {
-
-                    cache.put(
-                      event.request,
-                      copie
-                    );
-
-                  });
-              }
-
-              return reponse;
-            });
-
-        })
-
-    );
-  }
-);
+      })
+  );
+});
