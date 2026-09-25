@@ -2,222 +2,349 @@
 <html lang="fr">
 
 <head>
-  <meta charset="UTF-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-  >
+<meta charset="UTF-8">
 
-  <meta name="theme-color" content="#0f766e">
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+>
 
-  <meta
-    name="apple-mobile-web-app-capable"
-    content="yes"
-  >
+<meta
+  name="theme-color"
+  content="#0f766e"
+>
 
-  <meta
-    name="apple-mobile-web-app-status-bar-style"
-    content="default"
-  >
+<meta
+  name="apple-mobile-web-app-capable"
+  content="yes"
+>
 
-  <meta
-    name="apple-mobile-web-app-title"
-    content="Pointage"
-  >
+<meta
+  name="apple-mobile-web-app-status-bar-style"
+  content="default"
+>
 
-  <title>Pointage</title>
+<meta
+  name="apple-mobile-web-app-title"
+  content="Pointage"
+>
 
-  <style>
+<title>Pointage</title>
 
-    * {
-      box-sizing: border-box;
-    }
 
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      min-height: 100%;
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f1f5f9;
-    }
+<style>
 
-    body {
-      padding:
-        env(safe-area-inset-top)
-        12px
-        env(safe-area-inset-bottom)
-        12px;
-    }
+* {
+  box-sizing: border-box;
+}
 
-    .container {
-      width: 100%;
-      max-width: 600px;
-      margin: auto;
-    }
+html,
+body {
 
-    .header {
-      background: #0f766e;
-      color: white;
-      padding: 22px 18px;
-      border-radius: 18px;
-      margin: 12px 0;
-      text-align: center;
-    }
+  margin: 0;
+  padding: 0;
 
-    .header h1 {
-      margin: 0;
-      font-size: 30px;
-    }
+  min-height: 100%;
 
-    .header p {
-      margin: 8px 0 0;
-      opacity: .9;
-    }
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
 
-    .card {
-      background: white;
-      border-radius: 18px;
-      padding: 18px;
-      margin-bottom: 14px;
-      box-shadow: 0 3px 15px rgba(0,0,0,.08);
-    }
+  background: #f1f5f9;
+}
 
-    label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 7px;
-    }
 
-    input {
-      width: 100%;
-      min-height: 52px;
-      padding: 12px;
-      border: 1px solid #cbd5e1;
-      border-radius: 12px;
-      font-size: 18px;
-      margin-bottom: 15px;
-    }
+body {
 
-    button {
-      width: 100%;
-      min-height: 68px;
-      border: none;
-      border-radius: 16px;
-      color: white;
-      font-size: 17px;
-      font-weight: bold;
-      margin-top: 10px;
-      cursor: pointer;
-      touch-action: manipulation;
-    }
+  padding:
+    env(safe-area-inset-top)
+    12px
+    env(safe-area-inset-bottom)
+    12px;
+}
 
-    button:disabled {
-      opacity: .55;
-    }
 
-    .btn-start {
-      background: #16a34a;
-    }
+.container {
 
-    .btn-end {
-      background: #dc2626;
-    }
+  width: 100%;
+  max-width: 600px;
 
-    .status {
-      text-align: center;
-      padding: 14px;
-      border-radius: 12px;
-      font-weight: bold;
-      margin-bottom: 14px;
-    }
+  margin: auto;
+}
 
-    .online {
-      background: #dcfce7;
-      color: #166534;
-    }
 
-    .offline {
-      background: #fef3c7;
-      color: #92400e;
-    }
+.header {
 
-    .gps {
-      color: #475569;
-      font-size: 14px;
-      line-height: 1.7;
-    }
+  background: #0f766e;
+  color: white;
 
-    .history-title {
-      font-size: 19px;
-      font-weight: bold;
-      margin-bottom: 12px;
-    }
+  padding: 22px 18px;
 
-    .pointage {
-      padding: 13px 0;
-      border-bottom: 1px solid #e2e8f0;
-    }
+  border-radius: 18px;
 
-    .pointage:last-child {
-      border-bottom: none;
-    }
+  margin: 12px 0;
 
-    .badge {
-      display: inline-block;
-      padding: 5px 9px;
-      border-radius: 8px;
-      font-weight: bold;
-      font-size: 13px;
-    }
+  text-align: center;
+}
 
-    .badge-start {
-      background: #dcfce7;
-      color: #166534;
-    }
 
-    .badge-finished {
-      background: #dbeafe;
-      color: #1e40af;
-    }
+.header h1 {
 
-    .badge-pending {
-      background: #fef3c7;
-      color: #92400e;
-    }
+  margin: 0;
 
-    .small {
-      color: #64748b;
-      font-size: 13px;
-      line-height: 1.7;
-    }
+  font-size: 30px;
+}
 
-  </style>
+
+.header p {
+
+  margin: 8px 0 0;
+
+  opacity: .9;
+}
+
+
+.card {
+
+  background: white;
+
+  border-radius: 18px;
+
+  padding: 18px;
+
+  margin-bottom: 14px;
+
+  box-shadow:
+    0 3px 15px rgba(0,0,0,.08);
+}
+
+
+label {
+
+  display: block;
+
+  font-weight: bold;
+
+  margin-bottom: 7px;
+}
+
+
+input {
+
+  width: 100%;
+
+  min-height: 52px;
+
+  padding: 12px;
+
+  border:
+    1px solid #cbd5e1;
+
+  border-radius: 12px;
+
+  font-size: 18px;
+
+  margin-bottom: 15px;
+}
+
+
+button {
+
+  width: 100%;
+
+  min-height: 68px;
+
+  border: none;
+
+  border-radius: 16px;
+
+  color: white;
+
+  font-size: 17px;
+
+  font-weight: bold;
+
+  margin-top: 10px;
+
+  cursor: pointer;
+
+  touch-action: manipulation;
+}
+
+
+button:disabled {
+
+  opacity: .55;
+}
+
+
+.btn-start {
+
+  background: #16a34a;
+}
+
+
+.btn-end {
+
+  background: #dc2626;
+}
+
+
+.status {
+
+  text-align: center;
+
+  padding: 14px;
+
+  border-radius: 12px;
+
+  font-weight: bold;
+
+  margin-bottom: 14px;
+}
+
+
+.online {
+
+  background: #dcfce7;
+
+  color: #166534;
+}
+
+
+.offline {
+
+  background: #fef3c7;
+
+  color: #92400e;
+}
+
+
+.gps {
+
+  color: #475569;
+
+  font-size: 14px;
+
+  line-height: 1.7;
+}
+
+
+.history-title {
+
+  font-size: 19px;
+
+  font-weight: bold;
+
+  margin-bottom: 12px;
+}
+
+
+.pointage {
+
+  padding: 13px 0;
+
+  border-bottom:
+    1px solid #e2e8f0;
+}
+
+
+.pointage:last-child {
+
+  border-bottom: none;
+}
+
+
+.badge {
+
+  display: inline-block;
+
+  padding: 5px 9px;
+
+  border-radius: 8px;
+
+  font-weight: bold;
+
+  font-size: 13px;
+}
+
+
+.badge-start {
+
+  background: #dcfce7;
+
+  color: #166534;
+}
+
+
+.badge-finished {
+
+  background: #dbeafe;
+
+  color: #1e40af;
+}
+
+
+.badge-pending {
+
+  background: #fef3c7;
+
+  color: #92400e;
+}
+
+
+.small {
+
+  color: #64748b;
+
+  font-size: 13px;
+
+  line-height: 1.7;
+}
+
+</style>
+
 </head>
+
 
 <body>
 
+
 <div class="container">
 
+
   <div class="header">
+
     <h1>POINTAGE</h1>
-    <p>Enregistrement des prestations</p>
+
+    <p>
+      Enregistrement des prestations
+    </p>
+
   </div>
 
 
-  <div id="status" class="status">
+  <div
+    id="status"
+    class="status"
+  >
     Connexion...
   </div>
 
 
-  <!-- FORMULAIRE -->
+  <!-- =========================
+       FORMULAIRE
+       ========================= -->
 
   <div class="card">
+
 
     <label for="nom">
       NOM
     </label>
+
 
     <input
       id="nom"
@@ -231,6 +358,7 @@
       PRÉNOM
     </label>
 
+
     <input
       id="prenom"
       type="text"
@@ -243,6 +371,7 @@
       SITE D'INTERVENTION
     </label>
 
+
     <input
       id="site"
       type="text"
@@ -250,19 +379,25 @@
       placeholder="Site d'intervention"
     >
 
+
   </div>
 
 
-  <!-- BOUTONS -->
+  <!-- =========================
+       BOUTONS
+       ========================= -->
 
   <div class="card">
+
 
     <button
       id="btnDebut"
       class="btn-start"
       onclick="fairePointage('Heure de début de prestation')"
     >
+
       🟢 HEURE DE DÉBUT DE PRESTATION
+
     </button>
 
 
@@ -271,48 +406,66 @@
       class="btn-end"
       onclick="fairePointage('Heure de fin de prestation')"
     >
+
       🔴 HEURE DE FIN DE PRESTATION
+
     </button>
+
 
   </div>
 
 
-  <!-- GPS -->
+  <!-- =========================
+       GPS
+       ========================= -->
 
   <div class="card">
+
 
     <div class="history-title">
       📍 Position GPS
     </div>
 
-    <div id="gps" class="gps">
+
+    <div
+      id="gps"
+      class="gps"
+    >
       Recherche de la position...
     </div>
+
 
   </div>
 
 
-  <!-- HISTORIQUE -->
+  <!-- =========================
+       HISTORIQUE
+       ========================= -->
 
   <div class="card">
+
 
     <div class="history-title">
       📋 Derniers pointages
     </div>
 
+
     <div id="historique">
       Aucun pointage.
     </div>
 
+
   </div>
+
 
 </div>
 
 
 <script>
 
+
 /* =====================================================
-   CONFIGURATION
+   GOOGLE APPS SCRIPT
    ===================================================== */
 
 const URL_GOOGLE_SHEETS =
@@ -361,7 +514,9 @@ function getPointages() {
   try {
 
     return JSON.parse(
-      localStorage.getItem(STORAGE_KEY)
+      localStorage.getItem(
+        STORAGE_KEY
+      )
     ) || [];
 
   } catch (e) {
@@ -369,6 +524,7 @@ function getPointages() {
     return [];
 
   }
+
 }
 
 
@@ -383,18 +539,23 @@ function savePointages(pointages) {
 
 
 /* =====================================================
-   ID UNIQUE
+   ID
    ===================================================== */
 
 function creerId() {
 
   return (
+
     "POINTAGE-" +
+
     Date.now() +
+
     "-" +
+
     Math.random()
       .toString(36)
       .substring(2, 10)
+
   );
 
 }
@@ -409,7 +570,7 @@ function actualiserConnexion() {
   if (navigator.onLine) {
 
     statusElement.textContent =
-      "🟢 CONNECTÉ";
+      "🟢 CONNECTÉ — enregistrement automatique";
 
     statusElement.className =
       "status online";
@@ -419,7 +580,7 @@ function actualiserConnexion() {
   } else {
 
     statusElement.textContent =
-      "🟠 HORS CONNEXION — pointage conservé";
+      "🟠 HORS CONNEXION — enregistrement automatique";
 
     statusElement.className =
       "status offline";
@@ -446,7 +607,8 @@ document.addEventListener(
   function() {
 
     if (
-      document.visibilityState === "visible"
+      document.visibilityState ===
+      "visible"
     ) {
 
       synchroniser();
@@ -463,108 +625,127 @@ document.addEventListener(
 
 function obtenirGPS() {
 
-  return new Promise(function(resolve) {
+  return new Promise(
+    function(resolve) {
 
-    if (!navigator.geolocation) {
-
-      gpsElement.innerHTML =
-        "⚠️ GPS non disponible.";
-
-      resolve(null);
-
-      return;
-
-    }
-
-
-    navigator.geolocation.getCurrentPosition(
-
-      function(position) {
-
-        const gps = {
-
-          latitude:
-            position.coords.latitude,
-
-          longitude:
-            position.coords.longitude,
-
-          precision:
-            position.coords.accuracy
-
-        };
-
+      if (
+        !navigator.geolocation
+      ) {
 
         gpsElement.innerHTML =
-          "Latitude : " +
-          gps.latitude.toFixed(6) +
-          "<br>" +
-
-          "Longitude : " +
-          gps.longitude.toFixed(6) +
-          "<br>" +
-
-          "Précision : environ " +
-          Math.round(
-            gps.precision
-          ) +
-          " m";
-
-
-        resolve(gps);
-
-      },
-
-
-      function() {
-
-        gpsElement.innerHTML =
-          "⚠️ Position GPS indisponible.<br>" +
-          "Le pointage sera quand même enregistré.";
+          "⚠️ GPS non disponible.";
 
         resolve(null);
 
-      },
+        return;
 
-
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 300000
       }
 
-    );
 
-  });
+      navigator.geolocation.getCurrentPosition(
+
+        function(position) {
+
+          const gps = {
+
+            latitude:
+              position.coords.latitude,
+
+            longitude:
+              position.coords.longitude,
+
+            precision:
+              position.coords.accuracy
+
+          };
+
+
+          gpsElement.innerHTML =
+
+            "Latitude : " +
+
+            gps.latitude.toFixed(6) +
+
+            "<br>" +
+
+            "Longitude : " +
+
+            gps.longitude.toFixed(6) +
+
+            "<br>" +
+
+            "Précision : environ " +
+
+            Math.round(
+              gps.precision
+            ) +
+
+            " m";
+
+
+          resolve(gps);
+
+        },
+
+
+        function() {
+
+          gpsElement.innerHTML =
+            "⚠️ GPS indisponible. " +
+            "Le pointage sera quand même enregistré.";
+
+          resolve(null);
+
+        },
+
+
+        {
+
+          enableHighAccuracy: true,
+
+          timeout: 15000,
+
+          maximumAge: 300000
+
+        }
+
+      );
+
+    }
+  );
 
 }
 
 
 /* =====================================================
-   FAIRE UN POINTAGE
+   POINTAGE
    ===================================================== */
 
 async function fairePointage(type) {
 
+
   const nom =
     nomInput.value.trim();
 
+
   const prenom =
     prenomInput.value.trim();
+
 
   const site =
     siteInput.value.trim();
 
 
-  /* Vérifications */
+  /*
+   * Pas de fenêtre de validation.
+   * On affiche simplement l'information
+   * dans le formulaire.
+   */
 
   if (!nom) {
 
-    alert(
-      "Veuillez saisir votre NOM."
-    );
-
-    nomInput.focus();
+    statusElement.textContent =
+      "⚠️ Saisissez le NOM";
 
     return;
 
@@ -573,11 +754,8 @@ async function fairePointage(type) {
 
   if (!prenom) {
 
-    alert(
-      "Veuillez saisir votre PRÉNOM."
-    );
-
-    prenomInput.focus();
+    statusElement.textContent =
+      "⚠️ Saisissez le PRÉNOM";
 
     return;
 
@@ -586,11 +764,8 @@ async function fairePointage(type) {
 
   if (!site) {
 
-    alert(
-      "Veuillez saisir le SITE D'INTERVENTION."
-    );
-
-    siteInput.focus();
+    statusElement.textContent =
+      "⚠️ Saisissez le SITE";
 
     return;
 
@@ -603,65 +778,13 @@ async function fairePointage(type) {
 
   try {
 
-    /* GPS */
 
     const gps =
       await obtenirGPS();
 
 
-    /* Heure exacte du clic */
-
     const maintenant =
       Date.now();
-
-
-    /* Objet pointage */
-
-    const pointage = {
-
-      id:
-        creerId(),
-
-      dateHeureMs:
-        maintenant,
-
-      nom:
-        nom,
-
-      prenom:
-        prenom,
-
-      site:
-        site,
-
-      type:
-        type,
-
-      latitude:
-        gps
-          ? gps.latitude
-          : "",
-
-      longitude:
-        gps
-          ? gps.longitude
-          : "",
-
-      precision:
-        gps
-          ? gps.precision
-          : "",
-
-      commune:
-        "",
-
-      debutEnvoye:
-        false,
-
-      finEnvoyee:
-        false
-
-    };
 
 
     /* =================================================
@@ -673,40 +796,108 @@ async function fairePointage(type) {
       "Heure de début de prestation"
     ) {
 
+
+      const pointage = {
+
+        id:
+          creerId(),
+
+        dateHeureMs:
+          maintenant,
+
+        nom:
+          nom,
+
+        prenom:
+          prenom,
+
+        site:
+          site,
+
+        type:
+          type,
+
+        latitude:
+          gps
+            ? gps.latitude
+            : "",
+
+        longitude:
+          gps
+            ? gps.longitude
+            : "",
+
+        precision:
+          gps
+            ? gps.precision
+            : "",
+
+        commune:
+          "",
+
+        debutEnvoye:
+          false,
+
+        finDateHeureMs:
+          null,
+
+        finEnvoyee:
+          false
+
+      };
+
+
+      /*
+       * Enregistrement LOCAL immédiat.
+       */
+
       const pointages =
         getPointages();
 
 
-      /*
-       * On conserve le début sur le téléphone.
-       */
+      pointages.push(
+        pointage
+      );
 
-      pointages.push(pointage);
 
-      savePointages(pointages);
+      savePointages(
+        pointages
+      );
 
 
       afficherHistorique();
 
 
       /*
-       * Envoi immédiat si Internet.
+       * Envoi immédiat si connecté.
        */
 
-      if (navigator.onLine) {
+      if (
+        navigator.onLine
+      ) {
 
-        await envoyerPointage(
-          pointage
-        );
+        try {
+
+          await envoyerDebut(
+            pointage
+          );
+
+        } catch (error) {
+
+          console.error(
+            error
+          );
+
+        }
 
       }
 
 
-      alert(
+      statusElement.textContent =
         pointage.debutEnvoye
-          ? "✅ Heure de début enregistrée et envoyée à Google Sheets."
-          : "✅ Heure de début enregistrée sur le téléphone. Elle sera synchronisée dès que la connexion sera disponible."
-      );
+          ? "✅ DÉBUT ENREGISTRÉ"
+          : "✅ DÉBUT ENREGISTRÉ — synchronisation en attente";
+
 
     }
 
@@ -717,10 +908,6 @@ async function fairePointage(type) {
 
     else {
 
-      /*
-       * Recherche du dernier début ouvert
-       * pour NOM + PRÉNOM + SITE.
-       */
 
       const pointages =
         getPointages();
@@ -730,9 +917,16 @@ async function fairePointage(type) {
         null;
 
 
+      /*
+       * Recherche du dernier début ouvert.
+       */
+
       for (
-        let i = pointages.length - 1;
+        let i =
+          pointages.length - 1;
+
         i >= 0;
+
         i--
       ) {
 
@@ -751,11 +945,12 @@ async function fairePointage(type) {
           p.type ===
             "Heure de début de prestation" &&
 
-          !p.finEnvoyee
+          !p.finDateHeureMs
 
         ) {
 
-          debut = p;
+          debut =
+            p;
 
           break;
 
@@ -765,17 +960,14 @@ async function fairePointage(type) {
 
 
       /*
-       * S'il n'y a pas de début local,
-       * on crée quand même un pointage de fin.
+       * Si aucun début local :
+       * on ne demande aucune validation.
        */
 
       if (!debut) {
 
-        alert(
-          "⚠️ Aucun début ouvert n'a été trouvé sur ce téléphone.\n\n" +
-          "Si le début a été fait sur un autre téléphone, " +
-          "la fin ne pourra pas être rattachée automatiquement."
-        );
+        statusElement.textContent =
+          "⚠️ Aucun début ouvert trouvé pour cette personne et ce site.";
 
         return;
 
@@ -783,8 +975,7 @@ async function fairePointage(type) {
 
 
       /*
-       * La fin est envoyée avec le même ID
-       * que le début.
+       * Enregistrement local immédiat de la FIN.
        */
 
       debut.finDateHeureMs =
@@ -792,42 +983,60 @@ async function fairePointage(type) {
 
 
       debut.finLatitude =
-        pointage.latitude;
+        gps
+          ? gps.latitude
+          : "";
+
 
       debut.finLongitude =
-        pointage.longitude;
+        gps
+          ? gps.longitude
+          : "";
+
 
       debut.finPrecision =
-        pointage.precision;
+        gps
+          ? gps.precision
+          : "";
 
 
-      /*
-       * Envoi de la FIN.
-       */
+      savePointages(
+        pointages
+      );
 
-      if (navigator.onLine) {
-
-        await envoyerFin(
-          debut
-        );
-
-      }
-
-
-      /*
-       * Sauvegarde locale.
-       */
-
-      savePointages(pointages);
 
       afficherHistorique();
 
 
-      alert(
+      /*
+       * Envoi immédiat si connecté.
+       */
+
+      if (
+        navigator.onLine
+      ) {
+
+        try {
+
+          await envoyerFin(
+            debut
+          );
+
+        } catch (error) {
+
+          console.error(
+            error
+          );
+
+        }
+
+      }
+
+
+      statusElement.textContent =
         debut.finEnvoyee
-          ? "✅ Heure de fin enregistrée sur la même ligne Google Sheets."
-          : "✅ Heure de fin enregistrée sur le téléphone. Elle sera synchronisée dès que la connexion sera disponible."
-      );
+          ? "✅ FIN ENREGISTRÉE — même ligne"
+          : "✅ FIN ENREGISTRÉE — synchronisation en attente";
 
     }
 
@@ -839,10 +1048,8 @@ async function fairePointage(type) {
     );
 
 
-    alert(
-      "Le pointage a été conservé sur le téléphone.\n\n" +
-      "Il sera synchronisé lorsque la connexion sera disponible."
-    );
+    statusElement.textContent =
+      "✅ Pointage enregistré sur le téléphone — synchronisation en attente";
 
 
   } finally {
@@ -859,7 +1066,10 @@ async function fairePointage(type) {
    ENVOI DU DÉBUT
    ===================================================== */
 
-async function envoyerPointage(pointage) {
+async function envoyerDebut(
+  pointage
+) {
+
 
   const params =
     new URLSearchParams();
@@ -937,16 +1147,16 @@ async function envoyerPointage(pointage) {
     params.toString();
 
 
-  /*
-   * GET vers Apps Script.
-   */
-
   await fetch(
     url,
     {
+
       method: "GET",
+
       mode: "no-cors",
+
       cache: "no-store"
+
     }
   );
 
@@ -963,7 +1173,10 @@ async function envoyerPointage(pointage) {
     pointages.findIndex(
       function(p) {
 
-        return p.id === pointage.id;
+        return (
+          p.id ===
+          pointage.id
+        );
 
       }
     );
@@ -990,7 +1203,10 @@ async function envoyerPointage(pointage) {
    ENVOI DE LA FIN
    ===================================================== */
 
-async function envoyerFin(pointage) {
+async function envoyerFin(
+  pointage
+) {
+
 
   const params =
     new URLSearchParams();
@@ -1071,9 +1287,13 @@ async function envoyerFin(pointage) {
   await fetch(
     url,
     {
+
       method: "GET",
+
       mode: "no-cors",
+
       cache: "no-store"
+
     }
   );
 
@@ -1090,7 +1310,10 @@ async function envoyerFin(pointage) {
     pointages.findIndex(
       function(p) {
 
-        return p.id === pointage.id;
+        return (
+          p.id ===
+          pointage.id
+        );
 
       }
     );
@@ -1114,12 +1337,15 @@ async function envoyerFin(pointage) {
 
 
 /* =====================================================
-   SYNCHRONISATION
+   SYNCHRONISATION AUTOMATIQUE
    ===================================================== */
 
 async function synchroniser() {
 
-  if (!navigator.onLine) {
+
+  if (
+    !navigator.onLine
+  ) {
 
     return;
 
@@ -1131,22 +1357,28 @@ async function synchroniser() {
 
 
   for (
-    const pointage of pointages
+    const pointage
+    of pointages
   ) {
+
 
     try {
 
+
       /*
-       * Envoyer les débuts non envoyés.
+       * Début non envoyé
        */
 
       if (
+
         pointage.type ===
           "Heure de début de prestation" &&
+
         !pointage.debutEnvoye
+
       ) {
 
-        await envoyerPointage(
+        await envoyerDebut(
           pointage
         );
 
@@ -1154,12 +1386,15 @@ async function synchroniser() {
 
 
       /*
-       * Envoyer les fins non envoyées.
+       * Fin non envoyée
        */
 
       if (
+
         pointage.finDateHeureMs &&
+
         !pointage.finEnvoyee
+
       ) {
 
         await envoyerFin(
@@ -1168,11 +1403,11 @@ async function synchroniser() {
 
       }
 
+
     } catch (error) {
 
       console.log(
-        "Synchronisation reportée :",
-        error
+        "Synchronisation en attente."
       );
 
     }
@@ -1191,11 +1426,14 @@ async function synchroniser() {
 
 function afficherHistorique() {
 
+
   const pointages =
     getPointages();
 
 
-  if (!pointages.length) {
+  if (
+    !pointages.length
+  ) {
 
     historiqueElement.innerHTML =
       "Aucun pointage.";
@@ -1212,125 +1450,136 @@ function afficherHistorique() {
 
 
   historiqueElement.innerHTML =
+
     derniers
-      .map(function(p) {
-
-        const dateDebut =
-          new Date(
-            p.dateHeureMs
-          ).toLocaleString(
-            "fr-FR"
-          );
+      .map(
+        function(p) {
 
 
-        let html = "";
-
-
-        /*
-         * DÉBUT
-         */
-
-        html +=
-          '<div class="pointage">';
-
-
-        html +=
-          '<span class="badge badge-start">' +
-          '🟢 DÉBUT' +
-          '</span>';
-
-
-        html +=
-          '<br><strong>' +
-          escapeHtml(p.nom) +
-          ' ' +
-          escapeHtml(p.prenom) +
-          '</strong>';
-
-
-        html +=
-          '<br>' +
-          escapeHtml(p.site);
-
-
-        html +=
-          '<br>' +
-          '<span class="small">' +
-          'Début : ' +
-          dateDebut +
-          '</span>';
-
-
-        /*
-         * FIN
-         */
-
-        if (
-          p.finDateHeureMs
-        ) {
-
-          const dateFin =
+          const dateDebut =
             new Date(
-              p.finDateHeureMs
+              p.dateHeureMs
             ).toLocaleString(
               "fr-FR"
+            );
+
+
+          let html = "";
+
+
+          html +=
+            '<div class="pointage">';
+
+
+          html +=
+            '<span class="badge badge-start">' +
+            '🟢 DÉBUT' +
+            '</span>';
+
+
+          html +=
+            '<br><strong>' +
+            escapeHtml(
+              p.nom
+            ) +
+            ' ' +
+            escapeHtml(
+              p.prenom
+            ) +
+            '</strong>';
+
+
+          html +=
+            '<br>' +
+            escapeHtml(
+              p.site
             );
 
 
           html +=
             '<br>' +
             '<span class="small">' +
-            'Fin : ' +
-            dateFin +
+            'Début : ' +
+            dateDebut +
             '</span>';
 
-        }
+
+          if (
+            p.finDateHeureMs
+          ) {
 
 
-        /*
-         * État
-         */
+            const dateFin =
+              new Date(
+                p.finDateHeureMs
+              ).toLocaleString(
+                "fr-FR"
+              );
 
-        if (
-          p.finDateHeureMs &&
-          p.finEnvoyee
-        ) {
+
+            html +=
+              '<br>' +
+              '<span class="small">' +
+              'Fin : ' +
+              dateFin +
+              '</span>';
+
+
+            if (
+              p.finEnvoyee
+            ) {
+
+              html +=
+                '<br>' +
+                '<span class="badge badge-finished">' +
+                '✓ DÉBUT + FIN ENREGISTRÉS' +
+                '</span>';
+
+            } else {
+
+              html +=
+                '<br>' +
+                '<span class="badge badge-pending">' +
+                '⏳ FIN EN ATTENTE DE SYNCHRONISATION' +
+                '</span>';
+
+            }
+
+
+          } else {
+
+
+            if (
+              p.debutEnvoye
+            ) {
+
+              html +=
+                '<br>' +
+                '<span class="badge badge-start">' +
+                '✓ DÉBUT ENREGISTRÉ — EN ATTENTE DE FIN' +
+                '</span>';
+
+            } else {
+
+              html +=
+                '<br>' +
+                '<span class="badge badge-pending">' +
+                '⏳ DÉBUT EN ATTENTE DE SYNCHRONISATION' +
+                '</span>';
+
+            }
+
+          }
+
 
           html +=
-            '<br><span class="badge badge-finished">' +
-            '✓ DÉBUT + FIN SYNCHRONISÉS' +
-            '</span>';
+            '</div>';
+
+
+          return html;
 
         }
-
-        else if (
-          p.debutEnvoye
-        ) {
-
-          html +=
-            '<br><span class="badge badge-start">' +
-            '✓ DÉBUT ENVOYÉ — FIN EN ATTENTE' +
-            '</span>';
-
-        }
-
-        else {
-
-          html +=
-            '<br><span class="badge badge-pending">' +
-            '⏳ EN ATTENTE DE SYNCHRONISATION' +
-            '</span>';
-
-        }
-
-
-        html +=
-          '</div>';
-
-
-        return html;
-
-      })
+      )
       .join("");
 
 }
