@@ -1,92 +1,79 @@
-const CACHE_NAME = "pointage-v2";
+const CACHE_NAME = "pointage-salaries-v3";
 
-const FICHIERS = [
+const FICHIERS_A_METTRE_EN_CACHE = [
   "./",
-  "./index.html",
-  "./sw.js"
+  "./index.html"
 ];
 
+// Installation : mémorise le formulaire pour pouvoir l'ouvrir hors connexion
 self.addEventListener("install", event => {
-
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(FICHIERS))
+      .then(cache => cache.addAll(FICHIERS_A_METTRE_EN_CACHE))
   );
 
   self.skipWaiting();
 });
 
-
+// Activation : supprime les anciennes versions du cache
 self.addEventListener("activate", event => {
-
   event.waitUntil(
-
-    caches.keys()
-      .then(noms => {
-
-        return Promise.all(
-
-          noms.map(nom => {
-
-            if (nom !== CACHE_NAME) {
-              return caches.delete(nom);
-            }
-
-          })
-
-        );
-      })
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys
+          .filter(key => key !== CACHE_NAME)
+          .map(key => caches.delete(key))
+      );
+    })
   );
 
   self.clients.claim();
 });
 
-
+// Fonctionnement hors connexion
 self.addEventListener("fetch", event => {
 
-  const url =
-    new URL(event.request.url);
-
+  // On ne touche pas aux envois vers Google Apps Script
   if (
-    url.origin !== self.location.origin
+    event.request.url.includes("script.google.com")
   ) {
     return;
   }
 
   event.respondWith(
-
     caches.match(event.request)
-      .then(reponse => {
+      .then(reponseEnCache => {
 
-        if (reponse) {
-          return reponse;
+        if (reponseEnCache) {
+          return reponseEnCache;
         }
 
         return fetch(event.request)
-          .then(reponseReseau => {
+          .then(reponse => {
 
+            // Mémorise les nouvelles ressources du formulaire
             if (
-              reponseReseau &&
-              reponseReseau.status === 200
+              reponse &&
+              reponse.status === 200 &&
+              reponse.type === "basic"
             ) {
 
-              const copie =
-                reponseReseau.clone();
+              const copie = reponse.clone();
 
               caches.open(CACHE_NAME)
                 .then(cache => {
-
-                  cache.put(
-                    event.request,
-                    copie
-                  );
-
+                  cache.put(event.request, copie);
                 });
             }
 
-            return reponseReseau;
-          });
+            return reponse;
+          })
+          .catch(() => {
 
+            // Si aucune connexion et page demandée,
+            // on renvoie le formulaire déjà enregistré
+            return caches.match("./index.html");
+          });
       })
   );
 });
