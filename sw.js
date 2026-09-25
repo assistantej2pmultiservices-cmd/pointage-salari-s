@@ -1,137 +1,164 @@
-const CACHE_NAME = "pointage-v1";
+const CACHE_NAME = "pointage-v3";
 
 const FILES = [
   "./",
   "./index.html"
 ];
 
-self.addEventListener("install", function(event) {
 
-  event.waitUntil(
+self.addEventListener(
+  "install",
+  function(event) {
 
-    caches.open(CACHE_NAME).then(function(cache) {
+    event.waitUntil(
 
-      return cache.addAll(FILES);
+      caches
+        .open(CACHE_NAME)
+        .then(function(cache) {
 
-    })
-
-  );
-
-  self.skipWaiting();
-
-});
-
-
-self.addEventListener("activate", function(event) {
-
-  event.waitUntil(
-
-    caches.keys().then(function(keys) {
-
-      return Promise.all(
-
-        keys.map(function(key) {
-
-          if (key !== CACHE_NAME) {
-
-            return caches.delete(key);
-
-          }
-
-          return null;
+          return cache.addAll(FILES);
 
         })
 
-      );
+    );
 
-    }).then(function() {
-
-      return self.clients.claim();
-
-    })
-
-  );
-
-});
-
-
-self.addEventListener("fetch", function(event) {
-
-  if (
-    event.request.url.includes(
-      "script.google.com"
-    )
-  ) {
-
-    return;
+    self.skipWaiting();
 
   }
+);
 
 
-  if (
-    event.request.method !== "GET"
-  ) {
+self.addEventListener(
+  "activate",
+  function(event) {
 
-    return;
+    event.waitUntil(
 
-  }
+      caches
+        .keys()
+        .then(function(keys) {
 
+          return Promise.all(
 
-  event.respondWith(
+            keys.map(function(key) {
 
-    caches.match(
-      event.request
-    ).then(function(cached) {
+              if (
+                key !== CACHE_NAME
+              ) {
 
-      if (cached) {
+                return caches.delete(key);
 
-        return cached;
+              }
 
-      }
+              return null;
 
+            })
 
-      return fetch(
-        event.request
-      ).then(function(response) {
-
-        if (
-          !response ||
-          response.status !== 200
-        ) {
-
-          return response;
-
-        }
-
-
-        const copie =
-          response.clone();
-
-
-        caches.open(
-          CACHE_NAME
-        ).then(function(cache) {
-
-          cache.put(
-            event.request,
-            copie
           );
 
-        });
+        })
+        .then(function() {
+
+          return self.clients.claim();
+
+        })
+
+    );
+
+  }
+);
 
 
-        return response;
+self.addEventListener(
+  "fetch",
+  function(event) {
 
-      }).catch(function() {
+    const request =
+      event.request;
 
-        return caches.match(
-          "./index.html"
-        );
 
-      });
+    // Ne jamais mettre Google Apps Script
+    // dans le cache.
 
-    })
+    if (
+      request.url.includes(
+        "script.google.com"
+      )
+    ) {
 
-  );
+      return;
 
-});
+    }
+
+
+    if (
+      request.method !== "GET"
+    ) {
+
+      return;
+
+    }
+
+
+    event.respondWith(
+
+      caches
+        .match(request)
+        .then(function(cached) {
+
+          if (cached) {
+
+            return cached;
+
+          }
+
+
+          return fetch(request)
+
+            .then(function(response) {
+
+              if (
+                !response ||
+                response.status !== 200 ||
+                response.type === "opaque"
+              ) {
+
+                return response;
+
+              }
+
+
+              const copie =
+                response.clone();
+
+
+              caches
+                .open(CACHE_NAME)
+                .then(function(cache) {
+
+                  cache.put(
+                    request,
+                    copie
+                  );
+
+                });
+
+
+              return response;
+
+            })
+
+            .catch(function() {
+
+              return caches.match(
+                "./index.html"
+              );
+
+            });
+
+        })
+
+    );
+
+  }
+);
