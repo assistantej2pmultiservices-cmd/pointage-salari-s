@@ -2,8 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Pointage</title>
 
@@ -39,9 +38,7 @@ label {
   font-weight: bold;
 }
 
-input,
-select,
-button {
+input {
   width: 100%;
   padding: 15px;
   margin-top: 7px;
@@ -51,27 +48,32 @@ button {
 }
 
 button {
-  margin-top: 25px;
-  background: #1677ff;
-  color: white;
-  border: none;
+  width: 100%;
+  padding: 18px;
+  margin-top: 20px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 18px;
   font-weight: bold;
+  color: white;
+}
+
+#debut {
+  background: #168a3a;
+}
+
+#fin {
+  background: #d62828;
 }
 
 button:disabled {
-  background: #999;
+  opacity: .5;
 }
 
 #message {
   margin-top: 20px;
   text-align: center;
   font-weight: bold;
-}
-
-#attente {
-  margin-top: 15px;
-  text-align: center;
-  color: #666;
 }
 </style>
 </head>
@@ -80,43 +82,26 @@ button:disabled {
 
 <div class="container">
 
-<h1>Pointage</h1>
+<h1>POINTAGE</h1>
 
 <label>NOM</label>
-<input id="nom"
-       type="text"
-       autocomplete="family-name">
+<input id="nom" type="text" autocomplete="family-name">
 
 <label>PRÉNOM</label>
-<input id="prenom"
-       type="text"
-       autocomplete="given-name">
-
-<label>TYPE DE POINTAGE</label>
-
-<select id="type">
-  <option value="">-- Choisir --</option>
-  <option value="Heure de début de prestation">
-    Heure de début de prestation
-  </option>
-  <option value="Heure de fin de prestation">
-    Heure de fin de prestation
-  </option>
-</select>
+<input id="prenom" type="text" autocomplete="given-name">
 
 <label>SITE</label>
+<input id="site" type="text">
 
-<input id="site"
-       type="text"
-       autocomplete="organization">
+<button id="debut" onclick="pointer('Heure de début de prestation')">
+  🟢 DÉBUT DE PRESTATION
+</button>
 
-<button id="bouton" onclick="pointer()">
-  ENREGISTRER LE POINTAGE
+<button id="fin" onclick="pointer('Heure de fin de prestation')">
+  🔴 FIN DE PRESTATION
 </button>
 
 <div id="message"></div>
-
-<div id="attente"></div>
 
 </div>
 
@@ -125,11 +110,11 @@ button:disabled {
 const URL_GOOGLE_SHEETS =
 "https://script.google.com/macros/s/AKfycbyC7LfKcxuVCyPBZF0g4KGzAi1uno5tTkBh6i9HjYj6lgJqbXwc5FlHlKQscVqS9-60/exec";
 
-const CLE_STOCKAGE = "POINTAGES_HORS_CONNEXION_V1";
+const CLE_STOCKAGE = "POINTAGES_HORS_CONNEXION_V2";
 
 
 // ===============================
-// RÉCUPÉRER LES POINTAGES LOCAUX
+// RÉCUPÉRATION DES POINTAGES
 // ===============================
 
 function recupererPointages() {
@@ -138,14 +123,14 @@ function recupererPointages() {
     return JSON.parse(
       localStorage.getItem(CLE_STOCKAGE) || "[]"
     );
-  } catch(e) {
+  } catch (e) {
     return [];
   }
 }
 
 
 // ===============================
-// SAUVEGARDER LOCALEMENT
+// SAUVEGARDE LOCALE
 // ===============================
 
 function sauvegarderPointages(pointages) {
@@ -158,7 +143,7 @@ function sauvegarderPointages(pointages) {
 
 
 // ===============================
-// CRÉER UN ID UNIQUE
+// ID UNIQUE
 // ===============================
 
 function creerID() {
@@ -173,46 +158,35 @@ function creerID() {
 
 
 // ===============================
-// ENREGISTREMENT
+// POINTAGE
 // ===============================
 
-async function pointer() {
+async function pointer(type) {
 
   const nom =
-    document.getElementById("nom")
-      .value.trim();
+    document.getElementById("nom").value.trim();
 
   const prenom =
-    document.getElementById("prenom")
-      .value.trim();
-
-  const type =
-    document.getElementById("type")
-      .value;
+    document.getElementById("prenom").value.trim();
 
   const site =
-    document.getElementById("site")
-      .value.trim();
+    document.getElementById("site").value.trim();
 
   const message =
     document.getElementById("message");
 
-  const bouton =
-    document.getElementById("bouton");
 
-
-  if (!nom || !prenom || !type || !site) {
+  if (!nom || !prenom || !site) {
 
     message.textContent =
-      "Veuillez remplir tous les champs.";
+      "Veuillez remplir NOM, PRÉNOM et SITE.";
 
     return;
   }
 
 
-  bouton.disabled = true;
-
-  const maintenant = Date.now();
+  document.getElementById("debut").disabled = true;
+  document.getElementById("fin").disabled = true;
 
 
   const pointage = {
@@ -227,7 +201,7 @@ async function pointer() {
 
     site: site,
 
-    dateHeureMs: maintenant,
+    dateHeureMs: Date.now(),
 
     latitude: "",
 
@@ -242,7 +216,7 @@ async function pointer() {
 
 
   // ===============================
-  // GPS SI DISPONIBLE
+  // GPS
   // ===============================
 
   if (
@@ -253,21 +227,20 @@ async function pointer() {
     try {
 
       const position =
-        await new Promise(
-          (resolve, reject) => {
+        await new Promise((resolve, reject) => {
 
-            navigator.geolocation.getCurrentPosition(
-              resolve,
-              reject,
-              {
-                enableHighAccuracy: true,
-                timeout: 8000,
-                maximumAge: 60000
-              }
-            );
+          navigator.geolocation.getCurrentPosition(
+            resolve,
+            reject,
+            {
+              enableHighAccuracy: true,
+              timeout: 8000,
+              maximumAge: 60000
+            }
+          );
 
-          }
-        );
+        });
+
 
       pointage.latitude =
         position.coords.latitude;
@@ -278,14 +251,14 @@ async function pointer() {
       pointage.precision =
         position.coords.accuracy;
 
-    } catch(e) {
-      // Le pointage continue même sans GPS
+    } catch (e) {
+      // Le pointage fonctionne même sans GPS
     }
   }
 
 
   // ===============================
-  // SAUVEGARDE IMMÉDIATE
+  // ENREGISTREMENT LOCAL IMMÉDIAT
   // ===============================
 
   const pointages =
@@ -297,35 +270,39 @@ async function pointer() {
 
 
   message.textContent =
-    "Pointage enregistré.";
-
-  document.getElementById("attente").textContent =
-    "Synchronisation en cours…";
+    type === "Heure de début de prestation"
+      ? "DÉBUT enregistré"
+      : "FIN enregistré";
 
 
   // ===============================
-  // TENTATIVE D'ENVOI
+  // ENVOI AUTOMATIQUE
   // ===============================
 
-  await synchroniser();
+  synchroniser();
 
 
-  document.getElementById("attente").textContent =
-    navigator.onLine
-      ? "Enregistré."
-      : "Hors connexion : sera envoyé automatiquement au retour de la connexion.";
+  // ===============================
+  // RÉINITIALISATION DES CHAMPS
+  // ===============================
 
+  setTimeout(() => {
 
-  // Nettoyage formulaire
+    document.getElementById("nom").value = "";
+    document.getElementById("prenom").value = "";
+    document.getElementById("site").value = "";
 
-  document.getElementById("type").value = "";
+    document.getElementById("debut").disabled = false;
+    document.getElementById("fin").disabled = false;
 
-  bouton.disabled = false;
+    message.textContent = "";
+
+  }, 1500);
 }
 
 
 // ===============================
-// CONSTRUIRE L'URL
+// URL D'ENVOI
 // ===============================
 
 function construireURL(p) {
@@ -351,7 +328,7 @@ function construireURL(p) {
 
 
 // ===============================
-// ENVOI
+// ENVOI INVISIBLE
 // ===============================
 
 function envoyer(pointage) {
@@ -381,7 +358,7 @@ function envoyer(pointage) {
 
 
 // ===============================
-// SYNCHRONISATION
+// SYNCHRONISATION AUTOMATIQUE
 // ===============================
 
 async function synchroniser() {
@@ -393,35 +370,34 @@ async function synchroniser() {
   let pointages =
     recupererPointages();
 
+
   for (let i = 0; i < pointages.length; i++) {
 
-    const p = pointages[i];
+    const pointage = pointages[i];
 
-    if (p.envoye) {
+    if (pointage.envoye) {
       continue;
     }
 
-    await envoyer(p);
+    await envoyer(pointage);
 
-    p.envoye = true;
+    pointage.envoye = true;
 
     sauvegarderPointages(pointages);
   }
 
-  // Supprime les anciens pointages déjà envoyés
 
+  // Nettoyage automatique
   pointages =
-    recupererPointages();
-
-  pointages =
-    pointages.filter(p => !p.envoye);
+    recupererPointages()
+      .filter(p => !p.envoye);
 
   sauvegarderPointages(pointages);
 }
 
 
 // ===============================
-// RETOUR DE CONNEXION
+// RETOUR INTERNET
 // ===============================
 
 window.addEventListener(
@@ -431,7 +407,7 @@ window.addEventListener(
 
 
 // ===============================
-// SYNCHRONISATION AU CHARGEMENT
+// AU CHARGEMENT
 // ===============================
 
 window.addEventListener(
