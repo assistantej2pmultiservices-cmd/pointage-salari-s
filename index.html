@@ -1,114 +1,77 @@
 ```html
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
   <title>POINTAGE</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
 
     body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
       margin: 0;
       padding: 20px;
-      background: #f2f2f2;
-      font-family: Arial, sans-serif;
-      color: #222;
     }
 
     .container {
       max-width: 600px;
-      margin: 0 auto;
+      margin: auto;
       background: white;
       padding: 25px;
       border-radius: 15px;
-      box-shadow: 0 3px 15px rgba(0,0,0,0.12);
     }
 
     h1 {
       text-align: center;
-      margin-top: 0;
-      margin-bottom: 25px;
-      font-size: 32px;
-    }
-
-    label {
-      display: block;
-      margin-top: 15px;
-      margin-bottom: 6px;
-      font-weight: bold;
     }
 
     input {
       width: 100%;
-      padding: 15px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 17px;
-      outline: none;
-    }
-
-    input:focus {
-      border-color: #555;
-    }
-
-    .gps {
-      margin-top: 20px;
-      padding: 15px;
-      background: #f7f7f7;
-      border-radius: 8px;
-      text-align: center;
-      font-size: 14px;
-      line-height: 1.6;
+      padding: 14px;
+      margin: 8px 0 15px;
+      box-sizing: border-box;
+      font-size: 16px;
     }
 
     button {
       width: 100%;
-      border: none;
+      padding: 18px;
+      margin-top: 15px;
+      border: 0;
       border-radius: 10px;
-      padding: 18px 10px;
-      margin-top: 18px;
+      color: white;
       font-size: 17px;
       font-weight: bold;
-      cursor: pointer;
-    }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
     }
 
     .debut {
       background: #16a34a;
-      color: white;
     }
 
     .fin {
       background: #dc2626;
-      color: white;
     }
 
+    #gps,
     #message {
       margin-top: 20px;
       padding: 15px;
-      border-radius: 8px;
       text-align: center;
-      font-weight: bold;
-      min-height: 20px;
     }
 
-    .info {
-      margin-top: 20px;
-      text-align: center;
-      font-size: 12px;
-      color: #777;
-    }
   </style>
+
 </head>
+
 
 <body>
 
@@ -116,115 +79,249 @@
 
   <h1>POINTAGE</h1>
 
-  <label for="nom">NOM</label>
   <input
     id="nom"
     type="text"
-    placeholder="Votre nom"
-    autocomplete="family-name"
+    placeholder="NOM"
   >
 
-  <label for="prenom">PRÉNOM</label>
   <input
     id="prenom"
     type="text"
-    placeholder="Votre prénom"
-    autocomplete="given-name"
+    placeholder="PRÉNOM"
   >
 
-  <label for="site">SITE D'INTERVENTION</label>
   <input
     id="site"
     type="text"
-    placeholder="Site d'intervention"
+    placeholder="SITE D'INTERVENTION"
   >
 
-  <div id="gps" class="gps">
-    📍 Recherche de votre position GPS...
+  <div id="gps">
+    📍 Recherche GPS...
   </div>
 
   <button
-    id="boutonDebut"
     class="debut"
-    type="button"
-    onclick="envoyerPointage('Heure de début de prestation', this)"
+    onclick="envoyerPointage(
+      'Heure de début de prestation',
+      this
+    )"
   >
     🟢 HEURE DE DÉBUT DE PRESTATION
   </button>
 
   <button
-    id="boutonFin"
     class="fin"
-    type="button"
-    onclick="envoyerPointage('Heure de fin de prestation', this)"
+    onclick="envoyerPointage(
+      'Heure de fin de prestation',
+      this
+    )"
   >
     🔴 HEURE DE FIN DE PRESTATION
   </button>
 
   <div id="message"></div>
 
-  <div class="info">
-    Les pointages sont envoyés vers Google Sheets.
-  </div>
-
 </div>
 
 
 <script>
 
-/* =========================================================
-   URL GOOGLE APPS SCRIPT
-   ========================================================= */
+/*
+========================================================
+METTRE ICI LA NOUVELLE URL /exec
+========================================================
+*/
 
 const URL_GOOGLE_SHEETS =
-  "https://script.google.com/macros/s/AKfycbwq6-57RFAb7Pt9BOL4wIJapZ4mPqfsEXy-yIx1WhkykXrWPbNo0gxoIm4Kj9upf0dj/exec";
+  "COLLE_TA_NOUVELLE_URL_ICI";
 
 
-/* =========================================================
-   POSITION GPS
-   ========================================================= */
-
-let positionGPS = {
+let gps = {
   latitude: "",
   longitude: "",
   precision: ""
 };
 
 
-/* =========================================================
-   AFFICHAGE DU MESSAGE
-   ========================================================= */
+/*
+========================================================
+GPS
+========================================================
+*/
 
-function afficherMessage(message) {
-
-  document.getElementById("message").textContent = message;
-
-}
-
-
-/* =========================================================
-   RÉCUPÉRATION GPS
-   ========================================================= */
-
-function obtenirGPS() {
-
-  const blocGPS = document.getElementById("gps");
+function recupererGPS() {
 
   if (!navigator.geolocation) {
 
-    blocGPS.textContent =
-      "❌ La géolocalisation n'est pas disponible.";
+    document.getElementById("gps").textContent =
+      "GPS non disponible";
 
     return;
   }
-
-  blocGPS.textContent =
-    "📍 Recherche de votre position GPS...";
-
 
   navigator.geolocation.getCurrentPosition(
 
     function(position) {
 
-      positionGPS.latitude =
+      gps.latitude =
+        position.coords.latitude;
+
+      gps.longitude =
+        position.coords.longitude;
+
+      gps.precision =
+        position.coords.accuracy;
+
+      document.getElementById("gps").innerHTML =
+        "📍 GPS OK<br>" +
+        "Latitude : " +
+        gps.latitude.toFixed(6) +
+        "<br>" +
+        "Longitude : " +
+        gps.longitude.toFixed(6);
+
+    },
+
+    function() {
+
+      document.getElementById("gps").textContent =
+        "⚠️ GPS indisponible";
+
+    },
+
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 300000
+    }
+
+  );
+}
+
+
+/*
+========================================================
+ENVOI DU POINTAGE
+========================================================
+*/
+
+function envoyerPointage(type, bouton) {
+
+  const nom =
+    document.getElementById("nom").value.trim();
+
+  const prenom =
+    document.getElementById("prenom").value.trim();
+
+  const site =
+    document.getElementById("site").value.trim();
+
+
+  if (!nom || !prenom || !site) {
+
+    alert(
+      "Merci de remplir NOM, PRÉNOM et SITE."
+    );
+
+    return;
+  }
+
+
+  bouton.disabled = true;
+
+  document.getElementById("message").textContent =
+    "⏳ Envoi du pointage...";
+
+
+  const donnees = {
+
+    id:
+      "POINTAGE-" +
+      Date.now(),
+
+    dateHeureMs:
+      Date.now(),
+
+    nom:
+      nom,
+
+    prenom:
+      prenom,
+
+    site:
+      site,
+
+    type:
+      type,
+
+    latitude:
+      gps.latitude,
+
+    longitude:
+      gps.longitude,
+
+    precision:
+      gps.precision
+
+  };
+
+
+  fetch(
+
+    URL_GOOGLE_SHEETS,
+
+    {
+      method: "POST",
+
+      mode: "no-cors",
+
+      headers: {
+        "Content-Type":
+          "text/plain;charset=utf-8"
+      },
+
+      body:
+        JSON.stringify(donnees)
+    }
+
+  )
+
+  .then(function() {
+
+    document.getElementById("message").textContent =
+      "✅ POINTAGE ENVOYÉ";
+
+    bouton.disabled = false;
+
+  })
+
+  .catch(function(error) {
+
+    console.error(error);
+
+    document.getElementById("message").textContent =
+      "❌ ERREUR D'ENVOI";
+
+    bouton.disabled = false;
+
+  });
+
+}
+
+
+/*
+========================================================
+DÉMARRAGE
+========================================================
+*/
+
+recupererGPS();
+
+</script>
+
+</body>
+
+</html>
 ```
