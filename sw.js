@@ -1,10 +1,15 @@
-const CACHE_NAME = "pointage-v3";
+const CACHE_NAME = "pointage-cache-v1";
 
-const FILES = [
+const FICHIERS = [
   "./",
-  "./index.html"
+  "./index.html",
+  "./sw.js"
 ];
 
+
+/* =========================================================
+   INSTALLATION
+========================================================= */
 
 self.addEventListener(
   "install",
@@ -16,17 +21,19 @@ self.addEventListener(
         .open(CACHE_NAME)
         .then(function(cache) {
 
-          return cache.addAll(FILES);
+          return cache.addAll(FICHIERS);
 
         })
-
     );
 
     self.skipWaiting();
-
   }
 );
 
+
+/* =========================================================
+   ACTIVATION
+========================================================= */
 
 self.addEventListener(
   "activate",
@@ -36,129 +43,95 @@ self.addEventListener(
 
       caches
         .keys()
-        .then(function(keys) {
+        .then(function(noms) {
 
           return Promise.all(
 
-            keys.map(function(key) {
+            noms.map(function(nom) {
 
               if (
-                key !== CACHE_NAME
+                nom !== CACHE_NAME
               ) {
 
-                return caches.delete(key);
-
+                return caches.delete(nom);
               }
-
-              return null;
 
             })
 
           );
 
         })
-        .then(function() {
-
-          return self.clients.claim();
-
-        })
-
     );
 
+    self.clients.claim();
   }
 );
 
+
+/* =========================================================
+   REQUETES
+========================================================= */
 
 self.addEventListener(
   "fetch",
   function(event) {
 
-    const request =
-      event.request;
+    /*
+      Pour l'application elle-même :
+      cache d'abord, puis réseau.
 
+      Pour les appels externes Google Apps Script,
+      on laisse le navigateur gérer directement.
+    */
 
-    // Ne jamais mettre Google Apps Script
-    // dans le cache.
+    const url =
+      new URL(event.request.url);
 
     if (
-      request.url.includes(
-        "script.google.com"
-      )
+      url.origin !== self.location.origin
     ) {
 
       return;
-
     }
-
-
-    if (
-      request.method !== "GET"
-    ) {
-
-      return;
-
-    }
-
 
     event.respondWith(
 
       caches
-        .match(request)
-        .then(function(cached) {
+        .match(event.request)
+        .then(function(reponseCache) {
 
-          if (cached) {
-
-            return cached;
-
+          if (reponseCache) {
+            return reponseCache;
           }
 
-
-          return fetch(request)
-
-            .then(function(response) {
+          return fetch(event.request)
+            .then(function(reponse) {
 
               if (
-                !response ||
-                response.status !== 200 ||
-                response.type === "opaque"
+                reponse &&
+                reponse.status === 200
               ) {
 
-                return response;
+                const copie =
+                  reponse.clone();
 
+                caches
+                  .open(CACHE_NAME)
+                  .then(function(cache) {
+
+                    cache.put(
+                      event.request,
+                      copie
+                    );
+
+                  });
               }
 
-
-              const copie =
-                response.clone();
-
-
-              caches
-                .open(CACHE_NAME)
-                .then(function(cache) {
-
-                  cache.put(
-                    request,
-                    copie
-                  );
-
-                });
-
-
-              return response;
-
-            })
-
-            .catch(function() {
-
-              return caches.match(
-                "./index.html"
-              );
-
+              return reponse;
             });
 
         })
 
     );
-
   }
 );
