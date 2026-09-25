@@ -1,290 +1,813 @@
 ```html
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-  <meta charset="UTF-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  >
+<meta charset="UTF-8">
 
-  <meta name="theme-color" content="#ffffff">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="POINTAGE">
+<meta name="viewport"
+      content="width=device-width,
+               initial-scale=1,
+               maximum-scale=1,
+               viewport-fit=cover">
 
-  <title>POINTAGE</title>
+<meta name="theme-color" content="#111827">
 
-  <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+<meta name="apple-mobile-web-app-capable" content="yes">
 
-    html {
-      min-height: 100%;
-      background: #f5f5f5;
-      -webkit-text-size-adjust: 100%;
-    }
+<meta name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent">
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      min-height: 100dvh;
-      padding:
-        max(16px, env(safe-area-inset-top))
-        max(16px, env(safe-area-inset-right))
-        max(16px, env(safe-area-inset-bottom))
-        max(16px, env(safe-area-inset-left));
+<meta name="apple-mobile-web-app-title"
+      content="POINTAGE">
 
-      font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        Roboto,
-        Helvetica,
-        Arial,
-        sans-serif;
+<title>POINTAGE</title>
 
-      background: #f5f5f5;
-      color: #222;
-    }
+<style>
 
-    .container {
-      width: 100%;
-      max-width: 650px;
-      margin: 0 auto;
-    }
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
 
-    h1 {
-      margin: 8px 0 20px;
-      text-align: center;
-      font-size: clamp(28px, 8vw, 42px);
-      font-weight: 800;
-      letter-spacing: 1px;
-    }
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  font-family: Arial, sans-serif;
+  background: #f3f4f6;
+  color: #111827;
+}
 
-    .gps {
-      margin-bottom: 18px;
-      padding: 14px;
-      border-radius: 14px;
-      background: #fff;
-      border: 1px solid #ddd;
-      text-align: center;
-      font-size: clamp(13px, 3.5vw, 16px);
-      line-height: 1.5;
-      word-break: break-word;
-    }
+body {
+  padding:
+    max(15px, env(safe-area-inset-top))
+    15px
+    max(20px, env(safe-area-inset-bottom));
+}
 
-    .gps.ok {
-      border-color: #b8dfc1;
-      background: #f1fff4;
-    }
+.container {
+  width: 100%;
+  max-width: 600px;
+  margin: auto;
+}
 
-    .gps.error {
-      border-color: #f0b7b7;
-      background: #fff5f5;
-    }
+h1 {
+  text-align: center;
+  margin: 15px 0 25px;
+  font-size: 32px;
+  font-weight: 800;
+}
 
-    .gps.waiting {
-      background: #fffdf0;
-      border-color: #eadb91;
-    }
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.08);
+}
 
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
+label {
+  display: block;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 7px;
+}
 
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 15px;
-      font-weight: 700;
-    }
+input {
+  width: 100%;
+  height: 52px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 0 14px;
+  font-size: 17px;
+  margin-bottom: 16px;
+  background: white;
+}
 
-    input {
-      width: 100%;
-      height: 52px;
-      padding: 0 14px;
+button {
+  width: 100%;
+  min-height: 64px;
+  border: 0;
+  border-radius: 15px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  margin-top: 10px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
 
-      border: 1px solid #cfcfcf;
-      border-radius: 12px;
+.btn-debut {
+  background: #16a34a;
+}
 
-      background: #fff;
-      color: #222;
+.btn-fin {
+  background: #dc2626;
+}
 
-      font-size: 16px;
-      font-family: inherit;
+button:disabled {
+  opacity: .55;
+}
 
-      -webkit-appearance: none;
-      appearance: none;
+.gps {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 14px;
+  line-height: 1.6;
+  font-size: 14px;
+}
 
-      outline: none;
-    }
+.status {
+  text-align: center;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: bold;
+  margin-top: 15px;
+  display: none;
+}
 
-    input:focus {
-      border-color: #555;
-      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
-    }
+.status.ok {
+  display: block;
+  background: #dcfce7;
+  color: #166534;
+}
 
-    .buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      margin-top: 8px;
-    }
+.status.error {
+  display: block;
+  background: #fee2e2;
+  color: #991b1b;
+}
 
-    button {
-      width: 100%;
-      min-height: 62px;
-      padding: 14px 16px;
+.status.wait {
+  display: block;
+  background: #fef3c7;
+  color: #92400e;
+}
 
-      border: 0;
-      border-radius: 14px;
+.queue {
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 10px;
+}
 
-      font-size: clamp(16px, 4.5vw, 20px);
-      font-weight: 800;
-      line-height: 1.25;
+</style>
 
-      cursor: pointer;
-      touch-action: manipulation;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-appearance: none;
-      appearance: none;
-
-      transition:
-        transform 0.08s ease,
-        opacity 0.15s ease;
-    }
-
-    button:active {
-      transform: scale(0.98);
-    }
-
-    button:disabled {
-      opacity: 0.55;
-      cursor: default;
-    }
-
-    .btn-start {
-      background: #19a34a;
-      color: #fff;
-    }
-
-    .btn-end {
-      background: #d93030;
-      color: #fff;
-    }
-
-    .status {
-      min-height: 24px;
-      margin-top: 16px;
-      text-align: center;
-      font-size: 14px;
-      line-height: 1.5;
-      font-weight: 600;
-    }
-
-    .queue {
-      margin-top: 12px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      background: #fff;
-      border: 1px solid #ddd;
-      text-align: center;
-      font-size: 13px;
-      color: #555;
-    }
-
-    @media (max-width: 380px) {
-      body {
-        padding-left: 12px;
-        padding-right: 12px;
-      }
-
-      h1 {
-        margin-top: 4px;
-        margin-bottom: 16px;
-      }
-
-      input {
-        height: 50px;
-      }
-
-      button {
-        min-height: 58px;
-        font-size: 16px;
-      }
-    }
-
-    @media (orientation: landscape) and (max-height: 500px) {
-      body {
-        padding-top: max(10px, env(safe-area-inset-top));
-        padding-bottom: max(10px, env(safe-area-inset-bottom));
-      }
-
-      h1 {
-        margin: 4px 0 10px;
-        font-size: 28px;
-      }
-
-      form {
-        gap: 9px;
-      }
-
-      .buttons {
-        gap: 9px;
-        margin-top: 4px;
-      }
-
-      input {
-        height: 46px;
-      }
-
-      button {
-        min-height: 50px;
-      }
-
-      .gps {
-        margin-bottom: 10px;
-        padding: 9px;
-      }
-    }
-
-    @media (min-width: 700px) {
-      body {
-        padding-top: 30px;
-      }
-
-      .container {
-        padding: 0 10px;
-      }
-    }
-  </style>
 </head>
 
 <body>
 
-  <main class="container">
+<div class="container">
 
-    <h1>POINTAGE</h1>
+<h1>POINTAGE</h1>
 
-    <div id="gps" class="gps waiting">
-      📍 Recherche de votre position GPS…
-    </div>
+<div class="card">
 
-    <form id="pointageForm" autocomplete="on">
+<label for="nom">NOM</label>
 
-      <div>
-        <label for="nom">NOM</label>
-        <input
-          id="nom"
-          name="nom"
-          type="text"
-          autocomplete="family-name"
-          autocapitalize="characters"
+<input
+  id="nom"
+  type="text"
+  autocomplete="family-name"
+  placeholder="Nom"
+>
+
+<label for="prenom">PRÉNOM</label>
+
+<input
+  id="prenom"
+  type="text"
+  autocomplete="given-name"
+  placeholder="Prénom"
+>
+
+<label for="site">SITE D'INTERVENTION</label>
+
+<input
+  id="site"
+  type="text"
+  autocomplete="off"
+  placeholder="Site d'intervention"
+>
+
+</div>
+
+
+<div class="card">
+
+<div class="gps">
+
+<strong>📍 GPS</strong>
+
+<div id="gps">
+Recherche de la position...
+</div>
+
+</div>
+
+<button
+  class="btn-debut"
+  data-type="Heure de début de prestation">
+🟢 HEURE DE DÉBUT DE PRESTATION
+</button>
+
+<button
+  class="btn-fin"
+  data-type="Heure de fin de prestation">
+🔴 HEURE DE FIN DE PRESTATION
+</button>
+
+<div id="status" class="status"></div>
+
+<div id="queue" class="queue"></div>
+
+</div>
+
+</div>
+
+
+<script>
+
+/************************************************************
+ * CONFIGURATION
+ ************************************************************/
+
+const URL_GOOGLE_SCRIPT =
+"https://script.google.com/macros/s/AKfycbwq6-57RFAb7Pt9BOL4wIJapZ4mPqfsEXy-yIx1WhkykXrWPbNo0gxoIm4Kj9upf0dj/exec";
+
+const STORAGE_QUEUE = "pointages";
+
+const STORAGE_GPS = "dernierGPS";
+
+
+/************************************************************
+ * ÉLÉMENTS
+ ************************************************************/
+
+const nomInput =
+document.getElementById("nom");
+
+const prenomInput =
+document.getElementById("prenom");
+
+const siteInput =
+document.getElementById("site");
+
+const gpsElement =
+document.getElementById("gps");
+
+const statusElement =
+document.getElementById("status");
+
+const queueElement =
+document.getElementById("queue");
+
+
+/************************************************************
+ * GPS
+ ************************************************************/
+
+let positionActuelle = null;
+
+
+function afficherGPS(position) {
+
+  positionActuelle = {
+
+    latitude:
+      position.coords.latitude,
+
+    longitude:
+      position.coords.longitude,
+
+    precision:
+      position.coords.accuracy
+
+  };
+
+  localStorage.setItem(
+    STORAGE_GPS,
+    JSON.stringify(positionActuelle)
+  );
+
+  gpsElement.innerHTML =
+    "Latitude : " +
+    positionActuelle.latitude.toFixed(6) +
+    "<br>" +
+    "Longitude : " +
+    positionActuelle.longitude.toFixed(6) +
+    "<br>" +
+    "Précision : ±" +
+    Math.round(positionActuelle.precision) +
+    " m";
+
+}
+
+
+function erreurGPS() {
+
+  const ancien =
+    localStorage.getItem(STORAGE_GPS);
+
+  if (ancien) {
+
+    try {
+
+      positionActuelle =
+        JSON.parse(ancien);
+
+      gpsElement.innerHTML =
+        "📍 Dernière position connue<br>" +
+        "Latitude : " +
+        Number(positionActuelle.latitude).toFixed(6) +
+        "<br>" +
+        "Longitude : " +
+        Number(positionActuelle.longitude).toFixed(6) +
+        "<br>" +
+        "Précision : ±" +
+        Math.round(positionActuelle.precision || 0) +
+        " m";
+
+      return;
+
+    } catch (e) {}
+
+  }
+
+  gpsElement.innerHTML =
+    "⚠️ Position GPS indisponible";
+
+}
+
+
+function demanderGPS() {
+
+  if (!navigator.geolocation) {
+
+    erreurGPS();
+    return;
+
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    afficherGPS,
+    erreurGPS,
+    {
+      enableHighAccuracy: true,
+      timeout: 20000,
+      maximumAge: 0
+    }
+  );
+
+}
+
+
+demanderGPS();
+
+
+/************************************************************
+ * FILE D'ATTENTE
+ ************************************************************/
+
+function getQueue() {
+
+  try {
+
+    return JSON.parse(
+      localStorage.getItem(STORAGE_QUEUE) || "[]"
+    );
+
+  } catch (e) {
+
+    return [];
+
+  }
+
+}
+
+
+function saveQueue(queue) {
+
+  localStorage.setItem(
+    STORAGE_QUEUE,
+    JSON.stringify(queue)
+  );
+
+  afficherQueue();
+
+}
+
+
+function afficherQueue() {
+
+  const queue = getQueue();
+
+  if (queue.length === 0) {
+
+    queueElement.textContent =
+      "Synchronisation : OK";
+
+  } else {
+
+    queueElement.textContent =
+      queue.length +
+      " pointage(s) en attente de synchronisation";
+
+  }
+
+}
+
+
+/************************************************************
+ * ID UNIQUE
+ ************************************************************/
+
+function genererID() {
+
+  return (
+    "POINTAGE-" +
+    Date.now() +
+    "-" +
+    Math.random()
+      .toString(36)
+      .substring(2, 10)
+  );
+
+}
+
+
+/************************************************************
+ * NAVIGATEUR
+ ************************************************************/
+
+function getNavigateur() {
+
+  return navigator.userAgent || "";
+
+}
+
+
+/************************************************************
+ * ENVOI
+ ************************************************************/
+
+async function envoyerPointage(pointage) {
+
+  try {
+
+    /*
+     * no-cors est volontaire :
+     * Google Apps Script redirige la requête.
+     */
+
+    await fetch(
+      URL_GOOGLE_SCRIPT,
+      {
+        method: "POST",
+
+        mode: "no-cors",
+
+        headers: {
+          "Content-Type":
+            "text/plain;charset=utf-8"
+        },
+
+        body: JSON.stringify(pointage)
+
+      }
+    );
+
+    return true;
+
+  } catch (erreur) {
+
+    console.error(erreur);
+
+    return false;
+
+  }
+
+}
+
+
+/************************************************************
+ * SYNCHRONISATION
+ ************************************************************/
+
+async function synchroniser() {
+
+  const queue = getQueue();
+
+  if (queue.length === 0) {
+
+    afficherQueue();
+    return;
+
+  }
+
+  const restante = [];
+
+  for (const pointage of queue) {
+
+    const ok =
+      await envoyerPointage(pointage);
+
+    if (!ok) {
+
+      restante.push(pointage);
+
+    }
+
+  }
+
+  saveQueue(restante);
+
+}
+
+
+/************************************************************
+ * CRÉATION DU POINTAGE
+ ************************************************************/
+
+async function fairePointage(type, bouton) {
+
+  const nom =
+    nomInput.value.trim();
+
+  const prenom =
+    prenomInput.value.trim();
+
+  const site =
+    siteInput.value.trim();
+
+
+  if (!nom) {
+
+    afficherErreur("Veuillez saisir le NOM.");
+    nomInput.focus();
+    return;
+
+  }
+
+
+  if (!prenom) {
+
+    afficherErreur("Veuillez saisir le PRÉNOM.");
+    prenomInput.focus();
+    return;
+
+  }
+
+
+  if (!site) {
+
+    afficherErreur(
+      "Veuillez saisir le SITE D'INTERVENTION."
+    );
+
+    siteInput.focus();
+    return;
+
+  }
+
+
+  bouton.disabled = true;
+
+
+  /*
+   * On redemande une position fraîche
+   */
+
+  demanderGPS();
+
+
+  const maintenant =
+    Date.now();
+
+
+  const pointage = {
+
+    id: genererID(),
+
+    dateHeureMs:
+      maintenant,
+
+    dateHeure:
+      maintenant,
+
+    nom:
+      nom,
+
+    prenom:
+      prenom,
+
+    type:
+      type,
+
+    site:
+      site,
+
+    latitude:
+      positionActuelle
+        ? positionActuelle.latitude
+        : "",
+
+    longitude:
+      positionActuelle
+        ? positionActuelle.longitude
+        : "",
+
+    precision:
+      positionActuelle
+        ? positionActuelle.precision
+        : "",
+
+    navigateur:
+      getNavigateur()
+
+  };
+
+
+  /*
+   * On met d'abord dans la file locale.
+   * Le pointage n'est donc jamais perdu.
+   */
+
+  const queue =
+    getQueue();
+
+  queue.push(pointage);
+
+  saveQueue(queue);
+
+
+  afficherAttente(
+    "Pointage enregistré sur le téléphone..."
+  );
+
+
+  /*
+   * Tentative immédiate
+   */
+
+  const ok =
+    await envoyerPointage(pointage);
+
+
+  if (ok) {
+
+    /*
+     * Avec no-cors, "ok" signifie que le navigateur
+     * a accepté la requête. On retire donc le pointage
+     * de la file.
+     */
+
+    const nouvelleQueue =
+      getQueue().filter(function(p) {
+        return p.id !== pointage.id;
+      });
+
+    saveQueue(nouvelleQueue);
+
+    afficherOK(
+      "✅ Pointage envoyé"
+    );
+
+  } else {
+
+    afficherAttente(
+      "📴 Hors connexion : pointage conservé et sera envoyé automatiquement."
+    );
+
+  }
+
+
+  bouton.disabled = false;
+
+}
+
+
+/************************************************************
+ * AFFICHAGE
+ ************************************************************/
+
+function afficherOK(message) {
+
+  statusElement.className =
+    "status ok";
+
+  statusElement.textContent =
+    message;
+
+}
+
+
+function afficherErreur(message) {
+
+  statusElement.className =
+    "status error";
+
+  statusElement.textContent =
+    message;
+
+}
+
+
+function afficherAttente(message) {
+
+  statusElement.className =
+    "status wait";
+
+  statusElement.textContent =
+    message;
+
+}
+
+
+/************************************************************
+ * BOUTONS
+ ************************************************************/
+
+document
+  .querySelectorAll("button[data-type]")
+  .forEach(function(bouton) {
+
+    bouton.addEventListener(
+      "click",
+      function() {
+
+        fairePointage(
+          bouton.dataset.type,
+          bouton
+        );
+
+      }
+    );
+
+  });
+
+
+/************************************************************
+ * SYNCHRONISATION AUTOMATIQUE
+ ************************************************************/
+
+window.addEventListener(
+  "online",
+  function() {
+
+    afficherAttente(
+      "🌐 Connexion retrouvée. Synchronisation..."
+    );
+
+    synchroniser();
+
+  }
+);
+
+
+setInterval(
+  synchroniser,
+  30000
+);
+
+
+afficherQueue();
+
+synchroniser();
+
+
+/************************************************************
+ * SERVICE WORKER
+ ************************************************************/
+
+if ("serviceWorker" in navigator) {
+
+  window.addEventListener(
+    "load",
+    function() {
+
+      navigator.serviceWorker
+        .register("./sw.js")
+        .catch(function(erreur) {
+
+          console.log(
+            "Service Worker :",
+            erreur
+          );
+
+        });
+
+    }
+  );
+
+}
+
+</script>
+
+</body>
+</html>
 ```
