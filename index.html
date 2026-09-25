@@ -1,72 +1,334 @@
-```javascript
-const URL_GOOGLE_SHEETS = "COLLE_ICI_L_URL_DU_NOUVEAU_DEPLOIEMENT";
+```html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-function envoyerPointage(type) {
+  <title>POINTAGE</title>
 
-  const nom = document.getElementById("nom").value.trim();
-  const prenom = document.getElementById("prenom").value.trim();
-  const site = document.getElementById("site").value.trim();
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      text-align: center;
+      background: #f5f5f5;
+    }
 
-  if (!nom || !prenom || !site) {
-    alert("Merci de remplir NOM, PRÉNOM et SITE.");
-    return;
+    h1 {
+      margin-bottom: 25px;
+    }
+
+    input {
+      width: 90%;
+      padding: 14px;
+      margin: 8px 0;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      width: 95%;
+      padding: 18px;
+      margin: 12px 0;
+      border: none;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .debut {
+      background: #16a34a;
+      color: white;
+    }
+
+    .fin {
+      background: #dc2626;
+      color: white;
+    }
+
+    #gps {
+      margin: 20px 0;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+    }
+
+    #message {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>POINTAGE</h1>
+
+  <input
+    id="nom"
+    type="text"
+    placeholder="NOM"
+    autocomplete="off"
+  >
+
+  <input
+    id="prenom"
+    type="text"
+    placeholder="PRÉNOM"
+    autocomplete="off"
+  >
+
+  <input
+    id="site"
+    type="text"
+    placeholder="SITE D'INTERVENTION"
+    autocomplete="off"
+  >
+
+  <div id="gps">
+    📍 GPS : recherche de votre position...
+  </div>
+
+  <button
+    class="debut"
+    onclick="envoyerPointage('Heure de début de prestation')"
+  >
+    🟢 HEURE DE DÉBUT DE PRESTATION
+  </button>
+
+  <button
+    class="fin"
+    onclick="envoyerPointage('Heure de fin de prestation')"
+  >
+    🔴 HEURE DE FIN DE PRESTATION
+  </button>
+
+  <div id="message"></div>
+
+<script>
+
+  // ============================================================
+  // COLLE ICI L'URL DU NOUVEAU DÉPLOIEMENT APPS SCRIPT
+  // ============================================================
+
+  const URL_GOOGLE_SHEETS =
+    "COLLE_ICI_TON_URL_EXEC";
+
+
+  let positionGPS = {
+    latitude: "",
+    longitude: "",
+    precision: ""
+  };
+
+
+  // ============================================================
+  // GPS
+  // ============================================================
+
+  function obtenirGPS() {
+
+    if (!navigator.geolocation) {
+      document.getElementById("gps").textContent =
+        "❌ GPS non disponible";
+
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+
+      function(position) {
+
+        positionGPS.latitude =
+          position.coords.latitude;
+
+        positionGPS.longitude =
+          position.coords.longitude;
+
+        positionGPS.precision =
+          position.coords.accuracy;
+
+        document.getElementById("gps").innerHTML =
+          "📍 GPS OK<br>" +
+          "Latitude : " +
+          positionGPS.latitude.toFixed(6) +
+          "<br>" +
+          "Longitude : " +
+          positionGPS.longitude.toFixed(6);
+
+      },
+
+      function(error) {
+
+        document.getElementById("gps").textContent =
+          "❌ GPS impossible : " + error.message;
+      },
+
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 300000
+      }
+    );
   }
 
-  navigator.geolocation.getCurrentPosition(
 
-    function(position) {
+  // ============================================================
+  // ENVOI DU POINTAGE
+  // ============================================================
 
-      const data = {
-        id: crypto.randomUUID
-          ? crypto.randomUUID()
-          : String(Date.now()),
+  function envoyerPointage(type) {
 
-        dateHeureMs: Date.now(),
+    const nom =
+      document.getElementById("nom").value.trim();
 
-        nom: nom,
-        prenom: prenom,
+    const prenom =
+      document.getElementById("prenom").value.trim();
 
-        site: site,
+    const site =
+      document.getElementById("site").value.trim();
 
-        type: type,
 
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
+    if (!nom || !prenom || !site) {
 
-        precision: position.coords.accuracy,
+      alert(
+        "Merci de remplir NOM, PRÉNOM et SITE D'INTERVENTION."
+      );
 
-        commune: ""
+      return;
+    }
+
+
+    document.getElementById("message").textContent =
+      "⏳ Envoi du pointage...";
+
+
+    function envoyer(latitude, longitude, precision) {
+
+      const donnees = {
+
+        id:
+          "POINTAGE-" +
+          Date.now() +
+          "-" +
+          Math.random()
+            .toString(36)
+            .substring(2, 8),
+
+        dateHeureMs:
+          Date.now(),
+
+        nom:
+          nom,
+
+        prenom:
+          prenom,
+
+        site:
+          site,
+
+        type:
+          type,
+
+        latitude:
+          latitude,
+
+        longitude:
+          longitude,
+
+        precision:
+          precision,
+
+        commune:
+          ""
       };
 
-      fetch(URL_GOOGLE_SHEETS, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-          "Content-Type": "text/plain;charset=utf-8"
-        },
-        body: JSON.stringify(data)
-      })
+
+      fetch(
+        URL_GOOGLE_SHEETS,
+        {
+          method: "POST",
+
+          mode: "no-cors",
+
+          headers: {
+            "Content-Type":
+              "text/plain;charset=utf-8"
+          },
+
+          body:
+            JSON.stringify(donnees)
+        }
+      )
       .then(function() {
-        alert("Pointage envoyé.");
+
+        document.getElementById("message").textContent =
+          "✅ POINTAGE ENVOYÉ";
+
       })
-      .catch(function(erreur) {
-        console.error(erreur);
-        alert("Erreur d'envoi.");
+      .catch(function(error) {
+
+        console.error(error);
+
+        document.getElementById("message").textContent =
+          "❌ ERREUR D'ENVOI";
       });
-    },
-
-    function(erreur) {
-      alert(
-        "Impossible de récupérer votre position GPS : " +
-        erreur.message
-      );
-    },
-
-    {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 300000
     }
-  );
-}
+
+
+    // Utilise le GPS déjà récupéré
+    if (positionGPS.latitude !== "") {
+
+      envoyer(
+        positionGPS.latitude,
+        positionGPS.longitude,
+        positionGPS.precision
+      );
+
+      return;
+    }
+
+
+    // Sinon demande le GPS maintenant
+    navigator.geolocation.getCurrentPosition(
+
+      function(position) {
+
+        envoyer(
+          position.coords.latitude,
+          position.coords.longitude,
+          position.coords.accuracy
+        );
+
+      },
+
+      function() {
+
+        // Même sans GPS, le pointage est envoyé
+        envoyer("", "", "");
+      },
+
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 300000
+      }
+    );
+  }
+
+
+  // ============================================================
+  // DÉMARRAGE
+  // ============================================================
+
+  obtenirGPS();
+
+</script>
+
+</body>
+</html>
 ```
