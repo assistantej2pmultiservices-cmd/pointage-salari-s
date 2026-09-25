@@ -1,142 +1,8 @@
 ```html
-<!DOCTYPE html>
-<html lang="fr">
-
-<head>
-
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>POINTAGE</title>
-
-  <style>
-
-    body {
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      margin: 0;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background: white;
-      padding: 25px;
-      border-radius: 15px;
-    }
-
-    h1 {
-      text-align: center;
-    }
-
-    input {
-      width: 100%;
-      padding: 14px;
-      margin: 8px 0 15px;
-      box-sizing: border-box;
-      font-size: 16px;
-    }
-
-    button {
-      width: 100%;
-      padding: 18px;
-      margin-top: 15px;
-      border: 0;
-      border-radius: 10px;
-      color: white;
-      font-size: 17px;
-      font-weight: bold;
-    }
-
-    .debut {
-      background: #16a34a;
-    }
-
-    .fin {
-      background: #dc2626;
-    }
-
-    #gps,
-    #message {
-      margin-top: 20px;
-      padding: 15px;
-      text-align: center;
-    }
-
-  </style>
-
-</head>
-
-
-<body>
-
-<div class="container">
-
-  <h1>POINTAGE</h1>
-
-  <input
-    id="nom"
-    type="text"
-    placeholder="NOM"
-  >
-
-  <input
-    id="prenom"
-    type="text"
-    placeholder="PRÉNOM"
-  >
-
-  <input
-    id="site"
-    type="text"
-    placeholder="SITE D'INTERVENTION"
-  >
-
-  <div id="gps">
-    📍 Recherche GPS...
-  </div>
-
-  <button
-    class="debut"
-    onclick="envoyerPointage(
-      'Heure de début de prestation',
-      this
-    )"
-  >
-    🟢 HEURE DE DÉBUT DE PRESTATION
-  </button>
-
-  <button
-    class="fin"
-    onclick="envoyerPointage(
-      'Heure de fin de prestation',
-      this
-    )"
-  >
-    🔴 HEURE DE FIN DE PRESTATION
-  </button>
-
-  <div id="message"></div>
-
-</div>
-
-
 <script>
 
-/*
-========================================================
-METTRE ICI LA NOUVELLE URL /exec
-========================================================
-*/
-
 const URL_GOOGLE_SHEETS =
-  "COLLE_TA_NOUVELLE_URL_ICI";
-
+  "https://script.google.com/macros/s/AKfycbwq6-57RFAb7Pt9BOL4wIJapZ4mPqfsEXy-yIx1WhkykXrWPbNo0gxoIm4Kj9upf0dj/exec";
 
 let gps = {
   latitude: "",
@@ -144,20 +10,11 @@ let gps = {
   precision: ""
 };
 
-
-/*
-========================================================
-GPS
-========================================================
-*/
-
 function recupererGPS() {
 
   if (!navigator.geolocation) {
-
     document.getElementById("gps").textContent =
       "GPS non disponible";
-
     return;
   }
 
@@ -165,22 +22,15 @@ function recupererGPS() {
 
     function(position) {
 
-      gps.latitude =
-        position.coords.latitude;
-
-      gps.longitude =
-        position.coords.longitude;
-
-      gps.precision =
-        position.coords.accuracy;
+      gps.latitude = position.coords.latitude;
+      gps.longitude = position.coords.longitude;
+      gps.precision = position.coords.accuracy;
 
       document.getElementById("gps").innerHTML =
         "📍 GPS OK<br>" +
-        "Latitude : " +
-        gps.latitude.toFixed(6) +
+        "Latitude : " + gps.latitude.toFixed(6) +
         "<br>" +
-        "Longitude : " +
-        gps.longitude.toFixed(6);
+        "Longitude : " + gps.longitude.toFixed(6);
 
     },
 
@@ -196,16 +46,8 @@ function recupererGPS() {
       timeout: 15000,
       maximumAge: 300000
     }
-
   );
 }
-
-
-/*
-========================================================
-ENVOI DU POINTAGE
-========================================================
-*/
 
 function envoyerPointage(type, bouton) {
 
@@ -218,75 +60,51 @@ function envoyerPointage(type, bouton) {
   const site =
     document.getElementById("site").value.trim();
 
-
   if (!nom || !prenom || !site) {
-
-    alert(
-      "Merci de remplir NOM, PRÉNOM et SITE."
-    );
-
+    alert("Merci de remplir NOM, PRÉNOM et SITE.");
     return;
   }
-
 
   bouton.disabled = true;
 
   document.getElementById("message").textContent =
     "⏳ Envoi du pointage...";
 
-
   const donnees = {
 
-    id:
-      "POINTAGE-" +
-      Date.now(),
+    id: "POINTAGE-" + Date.now(),
 
-    dateHeureMs:
-      Date.now(),
+    dateHeureMs: Date.now(),
 
-    nom:
-      nom,
+    nom: nom,
 
-    prenom:
-      prenom,
+    prenom: prenom,
 
-    site:
-      site,
+    site: site,
 
-    type:
-      type,
+    type: type,
 
-    latitude:
-      gps.latitude,
+    latitude: gps.latitude,
 
-    longitude:
-      gps.longitude,
+    longitude: gps.longitude,
 
-    precision:
-      gps.precision
+    precision: gps.precision
 
   };
 
+  fetch(URL_GOOGLE_SHEETS, {
 
-  fetch(
+    method: "POST",
 
-    URL_GOOGLE_SHEETS,
+    mode: "no-cors",
 
-    {
-      method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
 
-      mode: "no-cors",
+    body: JSON.stringify(donnees)
 
-      headers: {
-        "Content-Type":
-          "text/plain;charset=utf-8"
-      },
-
-      body:
-        JSON.stringify(donnees)
-    }
-
-  )
+  })
 
   .then(function() {
 
@@ -307,21 +125,9 @@ function envoyerPointage(type, bouton) {
     bouton.disabled = false;
 
   });
-
 }
-
-
-/*
-========================================================
-DÉMARRAGE
-========================================================
-*/
 
 recupererGPS();
 
 </script>
-
-</body>
-
-</html>
 ```
