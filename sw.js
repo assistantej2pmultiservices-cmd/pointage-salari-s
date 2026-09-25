@@ -1,211 +1,138 @@
 ```javascript
 const CACHE_NAME = "pointage-v31";
 
-
-/* =====================================================
-   FICHIERS À METTRE EN CACHE
-===================================================== */
-
 const FILES = [
   "./",
   "./index.html"
 ];
 
+/*
+  ============================================================
+  INSTALLATION
+  ============================================================
+*/
 
-/* =====================================================
-   INSTALLATION
-===================================================== */
+self.addEventListener("install", function(event) {
 
-self.addEventListener(
-  "install",
-  function(event) {
+  event.waitUntil(
 
-    event.waitUntil(
+    caches
+      .open(CACHE_NAME)
+      .then(function(cache) {
 
-      caches
-        .open(CACHE_NAME)
-        .then(function(cache) {
+        return cache.addAll(FILES);
+      })
+  );
 
-          return cache.addAll(FILES);
+  self.skipWaiting();
+});
 
-        })
+/*
+  ============================================================
+  ACTIVATION
+  ============================================================
+*/
 
-    );
+self.addEventListener("activate", function(event) {
 
-    /*
-       Active immédiatement le nouveau
-       Service Worker.
-    */
+  event.waitUntil(
 
-    self.skipWaiting();
+    caches
+      .keys()
+      .then(function(keys) {
 
+        return Promise.all(
+
+          keys.map(function(key) {
+
+            if (key !== CACHE_NAME) {
+              return caches.delete(key);
+            }
+
+            return null;
+          })
+        );
+      })
+      .then(function() {
+
+        return self.clients.claim();
+      })
+  );
+});
+
+/*
+  ============================================================
+  INTERCEPTION DES REQUÊTES
+  ============================================================
+*/
+
+self.addEventListener("fetch", function(event) {
+
+  /*
+    Nous ne touchons pas aux POST.
+    Les pointages vers Google Apps Script
+    passent donc directement par le navigateur.
+  */
+
+  if (event.request.method !== "GET") {
+    return;
   }
-);
 
+  const url = new URL(event.request.url);
 
-/* =====================================================
-   ACTIVATION
-===================================================== */
+  /*
+    Ne jamais intercepter Google Apps Script.
+  */
 
-self.addEventListener(
-  "activate",
-  function(event) {
-
-    event.waitUntil(
-
-      caches
-        .keys()
-        .then(function(keys) {
-
-          return Promise.all(
-
-            keys.map(function(key) {
-
-              if (
-                key !== CACHE_NAME
-              ) {
-
-                return caches.delete(key);
-
-              }
-
-            })
-
-          );
-
-        })
-        .then(function() {
-
-          /*
-             Prend immédiatement le contrôle
-             des pages ouvertes.
-          */
-
-          return self.clients.claim();
-
-        })
-
-    );
-
+  if (
+    url.hostname === "script.google.com" ||
+    url.hostname.endsWith(".googleusercontent.com")
+  ) {
+    return;
   }
-);
 
+  /*
+    Ne gérer que les fichiers du même domaine
+    que GitHub Pages.
+  */
 
-/* =====================================================
-   REQUÊTES
-===================================================== */
+  if (url.origin !== self.location.origin) {
+    return;
+  }
 
-self.addEventListener(
-  "fetch",
-  function(event) {
+  /*
+    Cache-first :
+    1. cache
+    2. réseau
+    3. index.html hors connexion
+  */
 
+  event.respondWith(
 
-    /*
-       On ne traite que GET.
-    */
+    caches
+      .match(event.request)
+      .then(function(cachedResponse) {
 
-    if (
-      event.request.method !== "GET"
-    ) {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
 
-      return;
-
-    }
-
-
-    const url =
-      new URL(event.request.url);
-
-
-    /*
-       IMPORTANT :
-
-       Ne jamais intercepter les requêtes
-       Google Apps Script.
-
-       Le pointage doit aller directement
-       vers Google.
-    */
-
-    if (
-      url.hostname.includes(
-        "script.google.com"
-      )
-    ) {
-
-      return;
-
-    }
-
-
-    /*
-       Requêtes du même site uniquement.
-    */
-
-    if (
-      url.origin !== self.location.origin
-    ) {
-
-      return;
-
-    }
-
-
-    event.respondWith(
-
-      caches
-        .match(event.request)
-        .then(function(cachedResponse) {
-
-
-          /*
-             Si le fichier est déjà en cache,
-             on l'utilise immédiatement.
-          */
-
-          if (
-            cachedResponse
-          ) {
-
-            return cachedResponse;
-
-          }
-
-
-          /*
-             Sinon, on va chercher le fichier
-             sur GitHub Pages.
-          */
-
-          return fetch(
-            event.request
-          )
+        return fetch(event.request)
 
           .then(function(response) {
 
-
             /*
-               Vérification réponse.
+              On ne met en cache que les réponses valides.
             */
 
             if (
               !response ||
               response.status !== 200
             ) {
-
               return response;
-
             }
 
-
-            /*
-               Copie de la réponse pour
-               le cache.
-            */
-
-            const copie =
-              response.clone();
-
+            const copie = response.clone();
 
             caches
               .open(CACHE_NAME)
@@ -215,54 +142,34 @@ self.addEventListener(
                   event.request,
                   copie
                 );
-
               });
 
-
             return response;
-
           })
 
           .catch(function() {
 
-
             /*
-               Si Internet est absent,
-               on revient sur index.html.
+              Si le téléphone est hors connexion,
+              on recharge l'application principale.
             */
 
-            return caches.match(
-              "./index.html"
-            );
-
+            return caches.match("./index.html");
           });
+      })
+  );
+});
 
-        })
+/*
+  ============================================================
+  MISE À JOUR FORCÉE
+  ============================================================
+*/
 
-    );
+self.addEventListener("message", function(event) {
 
+  if (event.data === "SKIP_WAITING") {
+    self.skipWaiting();
   }
-);
-
-
-/* =====================================================
-   MESSAGE DEPUIS INDEX.HTML
-===================================================== */
-
-self.addEventListener(
-  "message",
-  function(event) {
-
-
-    if (
-      event.data ===
-      "SKIP_WAITING"
-    ) {
-
-      self.skipWaiting();
-
-    }
-
-  }
-);
+});
 ```
