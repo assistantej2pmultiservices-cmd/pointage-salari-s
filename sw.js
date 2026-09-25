@@ -1,5 +1,5 @@
 ```javascript
-const CACHE_NAME = "pointage-v40";
+const CACHE_NAME = "pointage-v1";
 
 const FILES = [
   "./",
@@ -15,16 +15,19 @@ self.addEventListener(
 
       caches
         .open(CACHE_NAME)
-        .then(function(cache) {
+        .then(
+          function(cache) {
 
-          return cache.addAll(FILES);
+            return cache.addAll(
+              FILES
+            );
 
-        })
+          }
+        )
 
     );
 
     self.skipWaiting();
-
   }
 );
 
@@ -35,34 +38,43 @@ self.addEventListener(
 
     event.waitUntil(
 
-      caches.keys()
-        .then(function(keys) {
+      caches
+        .keys()
+        .then(
+          function(keys) {
 
-          return Promise.all(
+            return Promise.all(
 
-            keys.map(function(key) {
+              keys.map(
+                function(key) {
 
-              if (key !== CACHE_NAME) {
+                  if (
+                    key !== CACHE_NAME
+                  ) {
 
-                return caches.delete(key);
+                    return caches.delete(
+                      key
+                    );
 
-              }
+                  }
 
-              return null;
+                  return null;
+                }
+              )
 
-            })
+            );
 
-          );
+          }
+        )
+        .then(
+          function() {
 
-        })
-        .then(function() {
+            return self.clients.claim();
 
-          return self.clients.claim();
-
-        })
+          }
+        )
 
     );
-
   }
 );
 
@@ -72,42 +84,25 @@ self.addEventListener(
   function(event) {
 
     /*
-     * On ne touche surtout pas aux requêtes
-     * vers Google Apps Script.
+     * Ne jamais intercepter
+     * l'envoi vers Google Apps Script.
      */
-
-    if (event.request.method !== "GET") {
-      return;
-    }
-
-
-    const url =
-      new URL(event.request.url);
-
-
     if (
-      url.hostname === "script.google.com" ||
-      url.hostname.endsWith(
-        ".googleusercontent.com"
+      event.request.url.includes(
+        "script.google.com"
       )
     ) {
-
       return;
-
     }
 
 
     /*
-     * Seulement les fichiers de ton site.
+     * Seulement les requêtes GET.
      */
-
     if (
-      url.origin !==
-      self.location.origin
+      event.request.method !== "GET"
     ) {
-
       return;
-
     }
 
 
@@ -115,49 +110,61 @@ self.addEventListener(
 
       caches
         .match(event.request)
-        .then(function(cached) {
+        .then(
+          function(cached) {
 
-          if (cached) {
-            return cached;
-          }
+            if (cached) {
+              return cached;
+            }
 
 
-          return fetch(event.request)
-            .then(function(response) {
+            return fetch(
+              event.request
+            )
+              .then(
+                function(response) {
 
-              if (
-                response &&
-                response.status === 200
-              ) {
+                  if (
+                    !response ||
+                    response.status !== 200
+                  ) {
+                    return response;
+                  }
 
-                const copie =
-                  response.clone();
 
-                caches
-                  .open(CACHE_NAME)
-                  .then(function(cache) {
+                  const copie =
+                    response.clone();
 
-                    cache.put(
-                      event.request,
-                      copie
+
+                  caches
+                    .open(CACHE_NAME)
+                    .then(
+                      function(cache) {
+
+                        cache.put(
+                          event.request,
+                          copie
+                        );
+
+                      }
                     );
 
-                  });
 
-              }
+                  return response;
+                }
+              )
+              .catch(
+                function() {
 
-              return response;
+                  return caches.match(
+                    "./index.html"
+                  );
 
-            })
-            .catch(function() {
-
-              return caches.match(
-                "./index.html"
+                }
               );
 
-            });
-
-        })
+          }
+        )
 
     );
 
